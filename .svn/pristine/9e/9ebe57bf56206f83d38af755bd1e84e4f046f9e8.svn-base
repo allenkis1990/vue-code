@@ -1,0 +1,102 @@
+<template>
+  <div class="container">
+    <!--标题栏-->
+    <div class="hb-header-box">
+      <div class="header-left" @click="back()">
+        <a href="javascript:void(0);" class="hb-ico ico-return"></a>
+      </div>
+      <div class="header-tit">修改密码</div>
+      <div class="header-right">
+        <a href="javascript:void(0);" class="header-txt" :style="getSaveButtonStyle()" @click="changePasswordAction">保存</a>
+      </div>
+    </div>
+    <!--标题栏-->
+    <div class="hb-wrap-box">
+      <div class="weui-panel hb-panel">
+        <div class="weui-cells weui-cells_form">
+          <div class="weui-cell">
+            <div class="weui-cell__hd"><label class="weui-label weui-label-1">当前密码</label></div>
+            <div class="weui-cell__bd"><input type="text" placeholder="请输入当前密码" class="weui-input" v-model="oldPassword"></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd"><label class="weui-label weui-label-1">新密码</label></div>
+            <div class="weui-cell__bd"><input type="text" placeholder="6~18位由字母、数字或_组成" class="weui-input" v-model="newPassword"></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd"><label class="weui-label weui-label-1">确认密码</label></div>
+            <div class="weui-cell__bd"><input type="text" placeholder="请再次输入密码" class="weui-input" v-model="confirmPassword"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+</style>
+<script>
+  require('../../../design/styles/webstyle.less')
+  import * as storeType from '../../store/types'
+  export default{
+    components: {},
+    data () {
+      return {
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    },
+    methods: {
+      hasFilledInformation () {
+        if (this.oldPassword.length && this.newPassword.length && this.confirmPassword.length) {
+          return true
+        } else {
+          return false
+        }
+      },
+      checkPassword () {
+        var reg = /^[\w]{6,18}$/
+//        \w已经等效于[A-Za-z0-9_]
+        if (!this.oldPassword.match(reg) || !this.newPassword.match(reg) || !this.confirmPassword.match(reg)) {
+          this.toast('密码格式不对,请重新输入')
+          return false
+        }
+        if (this.oldPassword === this.newPassword) {
+          this.toast('新密码与旧密码一致,请重新输入')
+          return false
+        }
+        if (this.newPassword !== this.confirmPassword) {
+          this.toast('新密码与确认密码不一致,请重新输入')
+          return false
+        }
+        return true
+      },
+      changePasswordAction () {
+        if (!this.hasFilledInformation()) {
+          return
+        }
+        if (this.checkPassword()) {
+          let params = {}
+          params.oldPassword = this.oldPassword
+          params.newPassword = this.newPassword
+          this.$store.dispatch(storeType.ACCOUNT_CHANGE_PASSWORD, params).then((data) => {
+            if (data.head.code !== storeType.NETWORK_RESULT_SUCCESS) {
+              this.toast(data.head.message)
+            } else {
+              this.toast('修改成功!')
+            }
+          }).catch(e => {
+            console.log('>>' + e)
+          })
+        }
+      },
+      getSaveButtonStyle () {
+        if (this.hasFilledInformation()) {
+          return {color: '#fff'}
+        } else {
+          return {color: '#666'}
+        }
+      }
+    }
+  }
+</script>

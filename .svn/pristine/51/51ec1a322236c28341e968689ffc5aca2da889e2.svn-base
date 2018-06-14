@@ -1,0 +1,481 @@
+<template>
+  <div class="container weui-tab">
+    <div class="weui-tab__panel bg-w">
+      <!--班级图片-->
+      <div class="hb-class-detail-img">
+        <img :src='iamgeUrl()' alt=" ">
+        <div class="label">{{yearObject}}<span class="year">年</span></div>
+        <div class="label-1" v-if="classInfo.haveDiscount">限时优惠</div>
+      </div>
+      <!--/班级图片-->
+
+      <!--tab-->
+      <tab class="vux-tab hb-tab" style="height:0">
+        <tab-item class="vux-tab-item" bar-active-color="#0c7cdb" :line-width="2" selected
+                  @click.native="tabSwitchEvent(0)">
+          培训信息
+        </tab-item>
+        <tab-item class="vux-tab-item" @click.native="tabSwitchEvent(1)">
+          课程目录
+        </tab-item>
+      </tab>
+      <!--培训信息-->
+      <div class="hb-tab-bd" v-if="tabCurrentIndex===0">
+        <div class="info-tit" v-if="classInfo.haveDiscount">优惠活动</div>
+        <div class="info-bd cr" v-if="classInfo.haveDiscount">
+          优惠期：{{classInfo.preferentialBeginTime}} 至 {{classInfo.preferentialEndTime}}
+        </div>
+        <div class="info-tit">考核要求</div>
+        <div class="info-bd"><span>选课学习进度&gt;={{classAssessInfo.assessTrainingComplete}}% </span>
+          <span
+            v-if="classAssessInfo.assessPassScore!=-1">，考试成绩>={{classAssessInfo.assessPassScore === null ? 0 : classAssessInfo.assessPassScore}}分</span>
+        </div>
+        <div class="info-tit">选课要求</div>
+        <div class="info-bd">
+          本年度继续教育学习中 选课学时数须 >={{classAssessInfo.trainHours}} 学时
+        </div>
+        <div class="info-tit">班级培训信息</div>
+        <div class="info-bd">
+          <p>年度：{{skuPropertyValue('继续教育年度')}}年</p>
+          <p>科目：{{skuPropertyValue('科目')}}</p>
+          <p>学时：{{classAssessInfo.trainingYearCredit}}</p>
+          <p>培训起止时间：  {{classInfo.trainingStartTime}}  至  {{classInfo.trainingEndTime}}</p>
+        </div>
+      </div>
+      <!--课程目录-->
+      <div class="hb-tab-bd" v-if="tabCurrentIndex===1">
+        <div class="class-directory-box">
+          <div class="line"></div>
+          <ul class="class-directory" v-if="reRender">
+            <!-- <li @click="showRequireCourseListState()">
+              <div class="items-tit">
+                <span class="dot"></span>
+                <span class="label">必修包</span>
+              </div>
+              <ul class="sub-items" v-if="requireCourseState">
+                <li v-for="subItem in requireCourseList">
+                  <span class="dot"></span>
+                  <span class="label">{{subItem.period}}学时</span>
+                  {{subItem.courseName}}
+                </li>
+              </ul>
+            </li> -->
+            <li>
+              <div class="items-tit" @click="toggleFirstPool">
+                <span class="dot"></span>
+                <!-- <span class="label">{{firstPool.type == 1 ? '必修包' : '选修包'}}</span> -->
+                <span>{{firstPool.electiveWrapName}}</span>
+              </div>
+              <ul class="sub-items">
+                <li v-for="subItem in requireCourseList" :key="subItem.courseId" v-if="showFirstPool">
+                  <span class="dot"></span>
+                  <span class="label">{{subItem.period}}学时</span>
+                  {{subItem.courseName}}
+                </li>
+              </ul>
+            </li>
+            <li v-for="(item,index) in optionCourseList" :key="item.electiveWrapId">
+              <div class="items-tit" @click="showOptionClassDetailAction(item)">
+                <span class="dot"></span>
+                <!-- <span class="label">{{item.type == 1 ? '必修包' : '选修包'}}</span> -->
+                <span>{{item.electiveWrapName}}</span>
+              </div>
+              <ul class="sub-items">
+                <li v-for="subItem in item.courseList" v-if="item.isShowDetail" :key="subItem.courseId">
+                  <span class="dot"></span>
+                  <span class="label">{{subItem.period}}学时</span>
+                  {{subItem.courseName}}
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <confirm v-model="show"
+             title="该培训班已报名或者存在待支付的订单，请前往查看！"
+             cancelText="前往支付"
+             confirmText="取消"
+             @on-cancel="onConfirm"
+             @on-confirm="onCancel"
+             @on-show="onShow"
+             @on-hide="onHide"></confirm>
+    <div class="weui-tabbar hb-tabbar">
+      <div class="left-box">
+        <!-- 有优惠 -->
+        <!--<span v-if="classInfo.haveDiscount">
+          <span class="price">￥ {{classInfo.dealPrice}}</span>
+          <span class="old-price">原价￥{{classInfo.originalPrice}}</span>
+        </span>-->
+        <!-- 无优惠 -->
+        <span class="price">￥ {{classInfo.totalAmount}}</span>
+      </div>
+      <a href="javascript:;" :class="buyStyle" @click="buyEvent">立即报名</a>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+  @import "../../../design/styles/webstyle.less";
+</style>
+<script>
+  import { Tab, TabItem, Confirm } from 'vux'
+  import * as storeTypes from '../../store/types'
+
+  export default {
+    components: {
+      TabItem,
+      Tab,
+      Confirm
+    },
+    component: {Tab, TabItem, Confirm},
+    data () {
+      return {
+        yearObject: {
+          skuPropertyId: '',
+          skuPropertyName: '',
+          skuPropertyValueId: '',
+          skuPropertyValueName: ''
+        },
+        tabCurrentIndex: 0,
+        price: this.$route.query.amount,
+        hasBuy: true,
+        optionCourseList: [],
+        requireCourseList: [],
+        reRender: true,
+        skuId: '',
+        trainingClassId: '',
+        requireCourseState: true,
+        show: false,
+        showFirstPool: true
+      }
+    },
+    computed: {
+      /**
+       * 立即购买的样式
+       */
+      buyStyle () {
+        if (this.hasBuy) {
+          return ['hb-btn']
+        }
+        return ['hb-btn', 'disabled']
+      },
+      /**
+       * 班级详情数据
+       */
+      classInfo () {
+        return this.$store.state.productModule.classDetail
+      },
+      /**
+       * 班级考核信息数据
+       */
+      classAssessInfo () {
+        let classDetail = this.$store.state.productModule.classDetail
+        if (classDetail.assessInformation === undefined || classDetail.assessInformation === null) {
+          return ''
+        }
+        return classDetail.assessInformation
+      },
+      /**
+       * 选课包数据
+       */
+      selectedCourseWrapList () {
+        let courseWrapList = this.$store.state.productModule.selectedCourseWrapList
+        if (courseWrapList.length === undefined || courseWrapList.length === null) {
+          return []
+        }
+        return courseWrapList
+      }
+    },
+    created () {
+      this.yearObject = this.$route.query.yearObject
+      this.skuId = this.$route.query.skuId
+      this.initRequestData()
+    },
+    methods: {
+      toggleFirstPool () {
+        this.showFirstPool = !this.showFirstPool
+      },
+      onCancel () {
+        this.show = false
+      },
+      onConfirm () {
+        this.show = false
+        let param = {
+          orderNo: this.orderNo
+        }
+        this.push({path: '/orderDetail', query: param})
+      },
+      onShow () {
+        console.log('onShow')
+      },
+      onHide () {
+        console.log('onHide')
+      },
+      // =====================================网络请求======================================
+      /**
+       * 网络请求 初始化
+       */
+      initRequestData () {
+        this.requestClassInfo()
+      },
+      /**
+       * 获取班级详情
+       */
+      requestClassInfo () {
+        let params = {
+          skuId: this.skuId
+        }
+        this.showLoading('加载中')
+        this.$store.dispatch(storeTypes.PRODUCT_CLASS_DETAIL_INFO_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.trainingClassId = data.data.trainingClassId
+            this.requestSeletedCourseWrapList()
+            return
+          }
+          console.log(data)
+        }).catch(e => {
+          console.log('error>>>>>' + e)
+        })
+      },
+      /**
+       * 获取选修课课程包列表
+       */
+      requestSeletedCourseWrapList () {
+        let params = {
+          trainingClassId: this.trainingClassId
+        }
+        this.showLoading('加载中')
+        this.$store.dispatch(storeTypes.PRODUCT_CLASS_COURSEWRAP_LIST_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            let array = []
+            for (let i = 0; i < data.data.electiveWrapList.length; i++) {
+              let item = data.data.electiveWrapList[i]
+              // if (item.type === 2) {
+              //   array.push(item)
+              // } else {
+              //   this.requestCouseList(item)
+              // }
+              array.push(item)
+            }
+            this.firstPool = array.shift()
+            this.requestCouseList(this.firstPool)
+            this.optionCourseList = array
+            return
+          }
+        }).catch(e => {
+          console.log('error>>>>>' + e)
+        })
+      },
+      /**
+       * 选修包 获取课程列表
+       * @param  item
+       */
+      requestOptionCouseList (item) {
+        let params = {
+          trainingClassId: this.trainingClassId,
+          electiveWrapId: item.electiveWrapId,
+          pageNo: 1,
+          pageSize: 100
+        }
+        this.showLoading('加载中')
+        this.$store.dispatch(storeTypes.PRODUCT_CLASS_COURSELIST_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            item.courseList = data.data.courseList
+            this.reRender = false
+            this.reRender = true
+            item.isShowDetail = true
+          }
+        }).catch(e => {
+          console.log('error>>>>>' + e)
+        })
+      },
+      /**
+       * 必修包 获取课程列表
+       * @param  item
+       */
+      requestCouseList (item) {
+        let params = {
+          trainingClassId: this.trainingClassId,
+          electiveWrapId: item.electiveWrapId,
+          pageNo: 1,
+          pageSize: 100
+        }
+        this.showLoading('加载中')
+        this.$store.dispatch(storeTypes.PRODUCT_CLASS_COURSELIST_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.requireCourseList = data.data.courseList
+          }
+          console.log(data)
+        }).catch(e => {
+          console.log('error>>>>>' + e)
+        })
+      },
+      // =====================================点击事件======================================
+      tabSwitchEvent (index) {
+        this.tabCurrentIndex = index
+      },
+      buyEvent () {
+        let params = {
+          skuId: this.skuId
+        }
+        this.$store.dispatch(storeTypes.CLASS_BUY_JUDGE, params).then(data => {
+          if (data.head.code === 30824) {
+            this.show = true
+            this.orderNo = data.head.message
+            return
+          } else if (data.head.code === 30821) {
+            this.$vux.alert.show({
+              content: '该培训班已报名，请前往学习',
+              onShow () {
+              },
+              onHide () {
+              }
+            })
+            return
+          } else if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            // this.toast(data.head.message)
+            this.$vux.alert.show({
+              content: data.head.message,
+              buttonText: '知道了',
+              onShow () {
+              },
+              onHide () {
+              }
+            })
+            return
+          }
+
+          if (this.needRemind('2c5a187362b532c57e00755sz3016091') === true) {
+            // 八大员的skuPropertyValueId值，固化为：2c5a187362b532c57e00755sz3016091
+            let that = this
+            this.$vux.confirm.show({
+              title: '提示',
+              content: '您是否持有《住房和城乡建设领域专业人员岗位培训考核合格证书》？',
+              cancelText: '否',
+              confirmText: '是',
+              onShow () {
+                console.log('plugin show')
+              },
+              onHide () {
+                console.log('plugin hide')
+              },
+              onCancel () {
+                that.toast('对不起，您不符合本班级报名要求，感谢您的关注！')
+              },
+              onConfirm () {
+                that.didCommitOrder()
+              }
+            })
+          } else if (this.needRemind('2c5a187362b532c57e00755sz3016093') === true) {
+            // 三类人员，固化为：2c5a187362b532c57e00755sz3016093
+            let that = this
+            this.$vux.confirm.show({
+              title: '提示',
+              content: '您的报名申请已通过审核，请及时缴费，并在当月内完成继续教育全部课程，避免证书无法申请延续',
+              cancelText: '取消',
+              confirmText: '前往报班',
+              onShow () {
+                console.log('plugin show')
+              },
+              onHide () {
+                console.log('plugin hide')
+              },
+              onCancel () {
+//                that.toast('对不起，您不符合本班级报名要求，感谢您的关注！')
+              },
+              onConfirm () {
+                that.didCommitOrder()
+              }
+            })
+            return
+          } else {
+            this.didCommitOrder()
+            return
+          }
+
+          // this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+          // this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_CER_INFO, {})
+          // this.$store.commit(storeTypes.CREATE_ORDER_NEED_INVOICE, false);
+          // this.push({path: '/createOrder', query: {skuId: this.skuId}})
+        }).catch(e => {
+          console.log('error>>>>>>' + e)
+        })
+      },
+      didCommitOrder () {
+        // 执行提交订单
+        this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+        this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_CER_INFO, {})
+        this.$store.commit(storeTypes.CREATE_ORDER_NEED_INVOICE, false)
+        this.push({path: '/createOrder', query: {skuId: this.skuId}})
+      },
+      // =====================================其他======================================
+      iamgeUrl () {
+        if (this.$store.state.productModule.classDetail.photoPath === undefined) {
+          return require('../../../design/images/course-img.jpg')
+        }
+        return this.$store.state.productModule.classDetail.photoPath
+      },
+      skuPropertyValue (property) {
+        let skuPropertyObeject = this.skuPropertyObeject(property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null) {
+          return skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyValueCopy (property) {
+        let skuPropertyObeject = this.skuPropertyObeject(property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null && skuPropertyObeject.skuPropertyValueName !== undefined && skuPropertyObeject.skuPropertyValueName !== '') {
+          return ' / ' + skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyObeject (property) {
+        let skuPropertyNameList = this.$store.state.productModule.classDetail.skuPropertyNameList
+        if (skuPropertyNameList === undefined || skuPropertyNameList === null) {
+          return ''
+        }
+        for (let i = 0; i < skuPropertyNameList.length; i++) {
+          if (skuPropertyNameList[i].skuPropertyName === property) {
+            return skuPropertyNameList[i]
+          }
+        }
+        return ''
+      },
+      showOptionClassDetailAction (item) {
+        this.reRender = false
+        this.reRender = true
+        if (item.courseList === undefined) {
+          item.isShowDetail = false
+          // 发起网络请求获取课程的信息，取得后将信息填充至item的courseList
+          this.requestOptionCouseList(item)
+        } else {
+          item.isShowDetail = !item.isShowDetail
+        }
+      },
+      showRequireCourseListState () {
+        this.requireCourseState = !this.requireCourseState
+      },
+      needRemind (skuPropertyValueId) {
+        // 是否需要在操作购买时，做提示。
+        // 八大员班级才需要提示
+        let skuPropertyNameList = this.$store.state.productModule.classDetail.skuPropertyNameList
+        if (skuPropertyNameList === undefined || skuPropertyNameList === null) {
+          return false
+        }
+        let count = skuPropertyNameList.length
+        for (let i = 0; i < count; i++) {
+          if (skuPropertyNameList[i].skuPropertyValueId === skuPropertyValueId) {
+            return true
+          }
+        }
+        return false
+      }
+    }
+  }
+</script>

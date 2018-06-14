@@ -1,0 +1,417 @@
+<template>
+  <div class="contain hb-box">
+    <div class="hb-box-bd">
+      <div class="view-pos">
+        <div class="course-detail-hd">
+          <div class="course-detail-img">
+            <img class="img" v-if="classDetailInfo.photoPath !== undefined && classDetailInfo.photoPath.length" :src="classDetailInfo.photoPath" alt=" " />
+          </div>
+          <div class="year-label-box" v-if="!classDetailInfo.optionYearList">
+            <img class="img" src="../../../../design/images/year-label.png" alt=" " />
+            <span class="year-label" v-if="classDetailInfo.skuPropertyNameList">{{classDetailInfo.skuPropertyNameList[1].skuPropertyValueName}}</span>
+          </div>
+          <div class="course-info">
+            <img class="mask" src="../../../../design/images/course-img-mask.png" alt=" " />
+            <div class="course-name">{{classDetailInfo.skuName}}</div>
+          </div>
+        </div>
+        <div class="hb-tab-tit">
+          <div class="tab-tit-items" :class="{'current': tabIndex == 0}" @click="toggleTab(0)">
+            <span class="items-name">培训信息</span>
+            <img class="current-img" src="../../../../design/images/tab-current-bg.jpg" />
+          </div>
+          <div class="tab-tit-items" :class="{'current': tabIndex == 1}" @click="toggleTab(1)">
+            <span class="items-name">课程目录</span>
+            <img class="current-img" src="../../../../design/images/tab-current-bg.jpg" />
+          </div>
+        </div>
+      </div>
+      <!-- 平台班级培训信息 -->
+      <ClassTrainInfo v-if="tabIndex == 0 && categoryType === 'TRAINING_CLASS_GOODS'" :trainInfo="classDetailInfo"></ClassTrainInfo>
+      <!-- 课程超市班级培训信息 -->
+      <CourseTrainInfo v-if="tabIndex == 0 && categoryType === 'COURSE_SUPERMARKET_GOODS'" :trainInfo="classDetailInfo"></CourseTrainInfo>
+      <!-- 平台班级课程目录 -->
+      <ClassDirectory v-if="tabIndex == 1 && categoryType === 'TRAINING_CLASS_GOODS'" :courseList="courseList" @onToggleExpand="toggleExpand"></ClassDirectory>
+      <!-- 课程超市班级课程目录 -->
+      <CourseDirectory v-if="tabIndex == 1 && categoryType === 'COURSE_SUPERMARKET_GOODS'" :chapterList="courseList" @onToggleExpand="toggleExpand"></CourseDirectory>
+    </div>
+    <div class="hb-tabbar">
+      <div class="left-box"><span class="ci fs40">￥ {{classDetailInfo.dealPrice}}</span></div>
+      <div class="hb-btn hb-btn-2" @click="signUp('JOIN_SHOPPINGCART')">加入购物车</div>
+      <div class="hb-btn" @click="signUp('JOIN_RIGHTNOW')">立即报名</div>
+    </div>
+    <popup-picker :show="showYearPicker" @on-hide="hideYearPicker" confirm-text="确定" :data="transformYearList(classDetailInfo.optionYearList)" :columns="1" v-model="years" show-name></popup-picker>
+  </div>
+</template>
+
+<style lang="less">
+@import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+@import "../../../../design/styles/webstyle.less";
+.vux-popup-header-right {
+  color: @theme-color;
+}
+</style>
+<script>
+import { Tab, TabItem, Confirm, PopupPicker } from 'vux';
+import * as storeTypes from '../../../store/types';
+import ClassTrainInfo from './ClassTrainInfo';
+import CourseTrainInfo from './CourseTrainInfo';
+import ClassDirectory from './ClassDirectory';
+import CourseDirectory from './CourseDirectory';
+
+export default {
+  components: {
+    TabItem,
+    Tab,
+    Confirm,
+    ClassTrainInfo,
+    CourseTrainInfo,
+    ClassDirectory,
+    CourseDirectory,
+    PopupPicker
+  },
+  component: { Tab, TabItem, Confirm },
+  data() {
+    return {
+      trainingItem: this.$route.query.trainingItem,
+      categoryType: this.$route.query.categoryType,
+      courseList: null,
+      classDetailInfo: {},
+      tabIndex: 0,
+      showYearPicker: false,
+      years: []
+    };
+  },
+  created() {
+    this.initData();
+  },
+  methods: {
+    toggleTab(index) {
+      this.tabIndex = index;
+    },
+    toggleExpand(index, type) {
+      let item = this.courseList[index];
+      item.expand = !item.expand;
+      if (type === 1 && !item.dirty) {
+        this.getCourseList(index);
+      }
+    },
+    initData() {
+      this.getClassDetail();
+      this.getCourseDirectory();
+    },
+    getClassDetail() {
+      this.showLoading('加载中');
+      let type;
+      let params = {
+        skuId: this.trainingItem.skuId
+      };
+      if (this.categoryType === 'TRAINING_CLASS_GOODS') {
+        type = storeTypes.CLASS_INFO_REQUEST;
+      } else if (this.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+        type = storeTypes.COURSE_INFO_REQUEST;
+        params.courseId = this.trainingItem.courseId;
+        params.coursePoolId = this.trainingItem.coursePackageId;
+      }
+      this.$store
+        .dispatch(type, params)
+        .then(data => {
+          this.hideLoading();
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.classDetailInfo = data.data;
+            return;
+          }
+        })
+        .catch(e => {
+          console.log('<<<<<' + e);
+        });
+    },
+    transformCourseList(type, courseList) {
+      return courseList.map((item, index) => {
+        let options = {};
+        if (type === 1) {
+          options = {
+            expand: false,
+            children: [],
+            dirty: false
+          };
+        } else if (type === 2) {
+          options = {
+            expand: false
+          };
+        }
+        return Object.assign({}, item, options);
+      });
+    },
+    getCourseDirectory() {
+      let type;
+      let params;
+      if (this.categoryType === 'TRAINING_CLASS_GOODS') {
+        type = storeTypes.COURSE_POOLLIST_REQUEST;
+        params = {
+          trainingClassId: this.trainingItem.schemeId
+        };
+      } else if (this.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+        type = storeTypes.COURSE_CHAPTERLIST_REQUEST;
+        params = {
+          courseId: this.trainingItem.courseId,
+          objectType: 1,
+          objectValue: this.trainingItem.schemeId,
+          packageId: this.trainingItem.coursePackageId,
+          courseType: 1
+        };
+      }
+      this.$store
+        .dispatch(type, params)
+        .then(data => {
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            // this.courseList = data.data;
+            if (this.categoryType === 'TRAINING_CLASS_GOODS') {
+              // 获取课程包下的课程
+              this.courseList = this.transformCourseList(
+                1,
+                data.data.courseWrapList
+              );
+              this.getCourseList(0);
+            } else {
+              this.courseList = this.transformCourseList(
+                2,
+                data.data.chapterList
+              );
+            }
+            return;
+          }
+        })
+        .catch(e => {
+          console.log('<<<<<' + e);
+        });
+    },
+    getCourseList(index) {
+      this.showLoading('加载中');
+      let param = {
+        trainingClassId: this.trainingItem.schemeId,
+        courseWrapId: this.courseList[index].courseWrapId,
+        pageNo: 1,
+        pageSize: 100
+      };
+      this.$store
+        .dispatch(storeTypes.POOL_COURSE_LIST_REQUEST, param)
+        .then(data => {
+          this.hideLoading('加载中');
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.courseList[index].children = data.data.courseList;
+            this.courseList[index].expand = true;
+            this.courseList[index].dirty = true;
+          } else {
+            this.toast(data.head.message);
+          }
+        })
+        .catch(e => {
+          console.log('<<<<<' + e);
+        });
+    },
+    hasBuy() {
+      if (
+        this.classDetailInfo.hasBuy &&
+        this.categoryType === 'TRAINING_CLASS_GOODS'
+      ) {
+        this.toast('该培训班已报名，无需重复报名！');
+        return false;
+      } else if (
+        this.classDetailInfo.hasBuy &&
+        this.categoryType === 'COURSE_SUPERMARKET_GOODS'
+      ) {
+        this.toast('该课程已报名，无需重复报名！');
+        return false;
+      }
+      return true;
+    },
+    transformYearList(list) {
+      if (!list) {
+        return [];
+      }
+      return list.map(item => {
+        return {
+          value: item.skuPropertyValueId,
+          name: item.skuPropertyValueName
+        };
+      });
+    },
+    hideYearPicker(closeType) {
+      this.showYearPicker = false
+      if (closeType) {
+        this.dealActions(this.joinType)
+      }
+    },
+    getYearValueById(id) {
+      let yearOptions = this.classDetailInfo.optionYearList
+      for (let i = 0, len = yearOptions.length; i < len; i++) {
+        if (yearOptions[i].skuPropertyValueId === id) {
+          return yearOptions[i].skuPropertyValueName
+        }
+      }
+    },
+    dealActions(joinType) {
+      switch (joinType) {
+        case 'JOIN_RIGHTNOW': {
+          // 跳转至创建订单页面
+          try {
+            this.$store.dispatch('changeSkuListState',[
+              Object.assign(
+                {},
+                this.classDetailInfo,
+                this.years[0]
+                  ? {yearOptionId: this.years[0],yearOptionValue: this.getYearValueById(this.years[0])}
+                  : {}
+              )
+            ])
+          } catch (e) {}
+          this.push({
+            path: '/createOrder'
+          });
+          break;
+        }
+        case 'JOIN_SHOPPINGCART': {
+          this.addShoppingAction();
+          break;
+        }
+        default:
+          console.log('no match type');
+      }
+    },
+    checkClassStatus(joinType) {
+      let skuValueObj = {
+        schemeId: this.classDetailInfo.schemeId,
+        commoditySkuId: this.classDetailInfo.skuId
+      };
+      if (
+        this.classDetailInfo.courseId !== undefined &&
+        this.classDetailInfo.courseId.length
+      ) {
+        skuValueObj.courseId = this.classDetailInfo.courseId;
+      }
+      if (
+        this.classDetailInfo.coursePackageId !== undefined &&
+        this.classDetailInfo.coursePackageId.length
+      ) {
+        skuValueObj.coursePoolId = this.classDetailInfo.coursePackageId;
+      }
+      let params = {
+        skuId: this.classDetailInfo.skuId
+      };
+      params.orderSkuPlaceInfo = skuValueObj;
+      if (
+        this.classDetailInfo.courseId !== undefined &&
+        this.classDetailInfo.courseId.length
+      ) {
+        params.courseId = this.classDetailInfo.courseId;
+      }
+      if (
+        this.classDetailInfo.coursePackageId !== undefined &&
+        this.classDetailInfo.coursePackageId.length
+      ) {
+        params.coursePoolId = this.classDetailInfo.coursePackageId;
+      }
+      this.$store
+        .dispatch(storeTypes.CLASS_BUY_JUDGE, params)
+        .then(data => {
+          if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.toast(data.head.message);
+            return;
+          }
+          let code = parseInt(data.data.code)
+          if (code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            if (
+              this.categoryType === 'COURSE_SUPERMARKET_GOODS' &&
+              this.classDetailInfo.optionYearList
+            ) {
+              this.showYearPicker = true
+              this.joinType = joinType
+            } else {
+              this.dealActions(joinType)
+            }
+          } else if (code === 30821) {
+            this.toast('该课程已报名，无需重复报名！');
+            // 30824：已在未支付订单中
+          } else if (code === 30824) {
+            this.$vux.confirm.show({
+              title: '提示',
+              content: '该课程已存在未支付的订单，是否前往支付？',
+              onCancel() {
+                console.log('plugin cancel');
+              },
+              onConfirm() {
+                console.log('plugin confirm');
+                this.push('/confirmPayOrder?orderNo=' + data.data.orderNo);
+              }
+            });
+          } else if (code === 505) {
+            this.toast(data.data.msg);
+          } else {
+            this.toast(data.data.msg);
+          }
+        })
+        .catch(e => {
+          console.log('<<<<<' + e);
+        });
+    },
+    signUp(type) {
+      if (this.hasBuy()) {
+        this.checkClassStatus(type);
+      }
+    },
+    addShoppingAction() {
+      let params = {};
+      let valueObject = {
+        trainingPeriod: this.classDetailInfo.trainingPeriod,
+        dealPrice: this.classDetailInfo.dealPrice,
+        skuId: this.classDetailInfo.skuId,
+        schemeId: this.classDetailInfo.schemeId
+      };
+      if (
+        this.classDetailInfo.courseId !== undefined &&
+        this.classDetailInfo.courseId.length
+      ) {
+        valueObject.courseId = this.classDetailInfo.courseId;
+      }
+      if (
+        this.classDetailInfo.coursePackageId !== undefined &&
+        this.classDetailInfo.coursePackageId.length
+      ) {
+        valueObject.courseWrapId = this.classDetailInfo.coursePackageId;
+      }
+      if (this.years[0]) {
+        valueObject.yearOptionId = this.years[0];
+      }
+      params.addCommodity = valueObject;
+      this.showLoading('加载中');
+      this.$store
+        .dispatch(storeTypes.CLASS_ADD_SHOPPING_CART, params)
+        .then(data => {
+          this.hideLoading();
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.toast('加入购物车成功');
+          } else if (data.head.code === 30801) {
+            // 跳转到购物车界面
+            this.$vux.confirm.show({
+              title: '提示',
+              content: data.head.message,
+              onCancel() {
+                console.log('plugin cancel');
+              },
+              onConfirm() {
+                console.log('plugin confirm');
+                // this.push('/confirmPayOrder?orderNo=' + data.data.orderNo)
+              }
+            });
+          } else {
+            this.toast(data.head.message);
+          }
+        })
+        .catch(e => {
+          this.toast(e);
+        });
+    }
+  }
+};
+</script>

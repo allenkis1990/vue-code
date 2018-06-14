@@ -1,0 +1,108 @@
+<template>
+<div class="contain">
+    <div class="hb-wrap-box hb-wrap-box-4" v-for="(item, index) in recordOrder.initialOrderList" :key="index">
+      <div class="bg-g">原订单</div>
+      <div class="weui-panel hb-panel" v-for="subItem in item.subOrderList" :key="subItem.subOrderNo">
+        <div class="order-info-box">
+          <div>{{item.createTime}}</div>
+          <div class="tr-2">订单号：{{subItem.subOrderNo}}</div>
+        </div>
+        <div class="hb-media-box hb-media-box-1" v-for="subItem in item.subOrderList" :key="subItem.subOrderNo">
+          <div class="hb-media-box-hd">
+            <img class="hb-media-box-thumb" :src="subItem.photoPath || '../../../design/images/course-img.jpg'"/>
+          </div>
+          <div class="hb-media-box-bd">
+            <div class="hb-media-box-title">{{subItem.skuName}}</div>
+            <div class="hb-media-box-desc">年度：{{getSkuValueWithKeyFromSkuArray('trainingYear',subItem.skuPropertyNameList)}}年</div>
+            <div class="hb-media-box-desc">科目：{{getSkuValueWithKeyFromSkuArray('trainingSubject',subItem.skuPropertyNameList)}}</div>
+            <div class="hb-media-box-desc">学时：{{subItem.trainingPeriod}}</div>
+          </div>
+          <div class="price">￥<span class="num">{{subItem.totalAmount}}</span></div>
+        </div>
+        <div class="order-info-box">
+          <div></div>
+          <div>总价<span class="ml10 ci fs32">¥ {{item.totalAmount}}</span> </div>
+        </div>
+      </div>
+    </div>
+    <div class="hb-wrap-box hb-wrap-box-4" v-for="(item,index) in recordOrder.derivativeOrderList" :key="index">
+    <div class="bg-g">换班订单</div>
+      <div class="weui-panel hb-panel" v-for="subItem in item.subOrderList" :key="subItem.subOrderNo">
+        <div class="order-info-box">
+          <div>{{item.createTime}}</div>
+          <div class="tr-2">订单号：{{subItem.subOrderNo}}</div>
+        </div>
+        <div class="hb-media-box hb-media-box-1">
+          <div class="hb-media-box-hd">
+            <img class="hb-media-box-thumb" :src="subItem.photoPath || '../../../design/images/course-img.jpg'" />
+          </div>
+          <div class="hb-media-box-bd">
+            <div class="hb-media-box-title">{{subItem.skuName}}</div>
+            <div class="hb-media-box-desc">年度：{{getSkuValueWithKeyFromSkuArray('trainingYear',subItem.skuPropertyNameList)}}年</div>
+            <div class="hb-media-box-desc">科目：{{getSkuValueWithKeyFromSkuArray('trainingSubject',subItem.skuPropertyNameList)}}</div>
+            <div class="hb-media-box-desc">学时：{{subItem.trainingPeriod}}</div>
+          </div>
+          <div class="price">￥<span class="num">{{subItem.totalAmount}}</span></div>
+        </div>
+        <div class="order-info-box">
+          <div></div>
+          <div>总价<span class="ml10 ci fs32">¥ {{item.totalAmount}}</span> </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import * as storeTypes from '../../store/types'
+import { Scroller } from 'vux'
+export default {
+  components: { Scroller },
+  data () {
+    return {
+      subOrderNo: this.$route.query.orderNo,
+      type: this.$route.query.type
+    }
+  },
+  computed: {
+    recordOrder: function () {
+      return this.$store.state.orderModule.orderChangeLog
+    }
+  },
+  methods: {
+    getSkuValueWithKeyFromSkuArray (skuKey, skuPropertyArray) {
+      if (skuKey === undefined || skuPropertyArray === undefined || skuPropertyArray.length === 0) {
+        return ''
+      }
+      let propertyName = ''
+      for (var i = 0; i < skuPropertyArray.length; i++) {
+        var skuPropertyObject = skuPropertyArray[i]
+        if (skuPropertyObject.skuPropertyCode === skuKey) {
+          propertyName = skuPropertyObject.skuPropertyValueName
+        }
+      }
+      return propertyName
+    },
+    requestOrderChangeLog: function () {
+      this.showLoading('加载中...')
+      let that = this
+      let params = {
+        subOrderNo: this.subOrderNo,
+        type: this.type
+      }
+      this.$store.dispatch(storeTypes.ORDER_GET_CHANGE_LOG, params).then(data => {
+        that.hideLoading()
+        if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+          this.toast(data.head.message)
+        }
+      }).then(e => {
+        that.hideLoading()
+        console.log(JSON.stringify(e))
+      })
+    }
+  },
+  mounted () {
+    this.requestOrderChangeLog()
+  }
+}
+
+</script>

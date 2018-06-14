@@ -1,0 +1,71 @@
+<template>
+  <div class="contain">
+    <div class="view-list">
+      <a href="http://192.168.15.248:9002/?page=menu">01-侧边栏</a>
+      <a href="http://192.168.15.248:9002/?page=menu_dialog">01-侧边栏-弹窗</a>
+      <a href="http://192.168.15.248:9002/?page=findTraining_class">02-发现培训-培训班学习</a>
+      <a href="http://192.168.15.248:9002/?page=findTraining_class01">02-发现培训-培训班学习（无tab）</a>
+      <a href="http://192.168.15.248:9002/?page=classDetail_info">02-发现培训-班级详情页-培训信息</a>
+      <a href="http://192.168.15.248:9002/?page=classDetail_directory">02-发现培训-班级详情页-课程目录</a>
+      <a href="http://192.168.15.248:9002/?page=findTraining_course">03-发现培训-自主选课学习</a>
+      <a href="http://192.168.15.248:9002/?page=courseDetail_info">03-发现培训-课程详情页-培训信息</a>
+      <a href="http://192.168.15.248:9002/?page=courseDetail_directory">03-发现培训-课程详情页-课程目录</a>
+      <a href="http://192.168.15.248:9002/?page=findTraining_screening">04-发现培训-筛选</a>
+      <a href="http://192.168.15.248:9002/?page=tryListen_directory">05-试听课程-课程目录</a>
+      <a href="http://192.168.15.248:9002/?page=tryListen_info">05-试听课程-课程信息</a>
+      <a href="http://192.168.15.248:9002/?page=shoppingCart">06-购物车</a>
+      <a href="http://192.168.15.248:9002/?page=shoppingCart_empty">06-购物车-空数据</a>
+      <a href="http://192.168.15.248:9002/?page=confirmOrder">07-确认订单</a>
+      <a href="http://192.168.15.248:9002/?page=confirmOrder_invoice">07-确认订单-发票信息</a>
+      <a href="http://192.168.15.248:9002/?page=confirmOrder_invoiceSend">07-确认订单-发票配送</a>
+      <a href="http://192.168.15.248:9002/?page=confirmPay">08-确认支付</a>
+      <a href="http://192.168.15.248:9002/?page=paySuccess">09-支付成功</a>
+      <a href="http://192.168.15.248:9002/?page=paySuccess_enterMyLearning">09-支付成功-进入我的学习</a>
+      <a href="http://192.168.15.248:9002/?page=signUpList_noPay">10-报名清单-未支付</a>
+      <a href="http://192.168.15.248:9002/?page=signUpList_paid">10-报名清单-已支付</a>
+      <a href="http://192.168.15.248:9002/?page=signUpList_close">10-报名清单-交易关闭</a>
+      <a href="http://192.168.15.248:9002/?page=signUpList_changeRecord">10-报名清单-换班记录</a>
+      <a href="http://192.168.15.248:9002/?page=signUpList_refundRecord">10-报名清单-退款记录</a>
+      <a href="http://192.168.15.248:9002/?page=orderDetail">11-订单详情</a>
+      <a href="http://192.168.15.248:9002/?page=orderDetail_status">11-订单详情-更多状态</a>
+      <a href="http://192.168.15.248:9002/?page=checkInvoice">12-查看发票</a>
+      <a href="http://192.168.15.248:9002/?page=invoiceView">12-发票预览</a>
+      <a href="http://192.168.15.248:9002/?page=perfectSendInfo_tips">13-完善配送信息提示</a>
+      <a href="http://192.168.15.248:9002/?page=perfectSendInfo">13-完善配送信息</a>
+      <a href="http://192.168.15.248:9002/?page=perfectSendInfo_invoice">13-完善配送信息-发票信息</a>
+      <a href="http://192.168.15.248:9002/?page=perfectSendInfo_invoiceSend">13-完善配送信息-发票配送-自取</a>
+      <a href="http://192.168.15.248:9002/?page=login">14-登录</a>
+      <a href="http://192.168.15.248:9002/?page=registered">14-注册</a>
+      <a href="http://192.168.15.248:9002/?page=forgetPassword">14-忘记密码</a>
+      <a href="http://192.168.15.248:9002/?page=setPassword">14-设置新密码</a>
+      <a href="http://192.168.15.248:9002/?page=personalCenter">15-个人中心</a>
+      <a href="http://192.168.15.248:9002/?page=personalCenter_info">15-个人中心-个人信息</a>
+      <a href="http://192.168.15.248:9002/?page=personalCenter_address">15-个人中心-收货信息</a>
+      <a href="http://192.168.15.248:9002/?page=personalCenter_password">15-个人中心-修改密码</a>
+      <a href="http://192.168.15.248:9002/?page=personalCenter_changePhone">15-个人中心-换绑手机</a>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+
+  .view-list{
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .view-list a{
+    display: block;
+    background-color: #08ae9b;
+    color: #fff;
+    padding: 8px 10px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    min-width: 220px;
+  }
+</style>
+<script>
+  require('../styles/webstyle.less')
+</script>

@@ -1,0 +1,76 @@
+<template>
+  <div class="container">
+    <!--标题栏-->
+    <div class="hb-header-box">
+      <div class="header-left" @click="back()">
+        <a href="javascript:void(0);" class="hb-ico ico-return"></a>
+      </div>
+      <div class="header-tit">个人信息</div>
+      <div class="header-right">
+        <a href="javascript:void(0);" class="header-txt" @click="editInfomationAction">编辑</a>
+      </div>
+    </div>
+    <!--标题栏-->
+
+    <div class="hb-wrap-box">
+      <div class="hb-warm-tips hb-warm-tips-1">
+        <i class="weui-icon-warn"></i>
+        <span class="tips-txt">请正确填写您的收件地址，以便下一次报名培训班级时作为发票/证书的邮寄地址，感谢您的配合！</span>
+      </div>
+      <div class="weui-panel hb-panel mt0">
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p class="bd-items"><span class="tit-2">收件人</span>{{userReceiptInfo.receiverName}}
+            </p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p class="bd-items"><span class="tit-2">手机号</span>{{userReceiptInfo.mobileNo}}
+            </p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p class="bd-items"><span class="tit-2">收件地区</span>{{getReceiptProvinceText()}}</p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p class="bd-items"><span class="tit-2">详细地址</span><span class="txt">{{userReceiptInfo.addressDetails}}</span>
+            </p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p class="bd-items"><span class="tit-2">邮政编码</span>{{userReceiptInfo.postCode}}
+            </p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+</style>
+<script>
+  require('../../../design/styles/webstyle.less')
+  export default{
+    mounted () {
+      this.userReceiptInfo = this.$store.getters.userReceiptInfo
+    },
+    components: {},
+    data () {
+      return {
+        userReceiptInfo: {}
+      }
+    },
+    computed: {
+    },
+    methods: {
+      editInfomationAction () {
+        this.push('./receiptInformationEdit')
+      },
+      getReceiptProvinceText () {
+        if (this.userReceiptInfo.provinceName !== undefined && this.userReceiptInfo.cityName !== undefined) {
+          return this.userReceiptInfo.provinceName + '\t' + this.userReceiptInfo.cityName + '\t' + this.userReceiptInfo.districtName
+        } else {
+          return ''
+        }
+      }
+    }
+  }
+</script>

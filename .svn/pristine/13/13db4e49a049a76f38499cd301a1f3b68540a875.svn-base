@@ -1,0 +1,138 @@
+<template>
+  <div class="container weui-tab">
+    <div class="weui-tab__panel">
+      <!--标题栏-->
+      <div class="hb-header-box">
+        <div class="header-left" @click="back()">
+          <a href="javascript:void(0);" class="hb-ico ico-return"></a>
+        </div>
+        <div class="header-tit">个人信息</div>
+      </div>
+      <!--标题栏-->
+      <div class="hb-wrap-box">
+        <div class="weui-panel hb-panel">
+          <div class="weui-cells">
+            <!-- V1.0.0修复版本隐藏 -->
+            <!-- <div class="weui-cell">
+              <div class="weui-cell__bd"><p><span class="tit-2">用户名</span>{{userInfo.accountName}}</p></div>
+            </div> -->
+            <div class="weui-cell">
+              <div class="weui-cell__bd"><p><span class="tit-2">身份证号</span>{{userInfo.identityCardNo}}</p></div>
+            </div>
+            <div class="weui-cell" >
+              <!-- <div class="weui-cell__hd">
+                <p><span class="tit-2">姓名</span></p>
+              </div>
+              <div class="weui-cell__bd">
+                <input class="weui-input" type="text" v-model="userInfo.userName">
+              </div>
+              <div class="weui-cell__ft"></div> -->
+              <div class="weui-cell__bd"><p><span class="tit-2">姓名</span>{{userInfo.userName}}</p></div>
+            </div>
+
+            <div class="weui-cell">
+              <div class="weui-cell__bd"><p><span class="tit-2">手机号</span>{{userInfo.phoneNumber}}</p></div>
+            </div>
+            <!-- V1.0.0修复版本隐藏 -->
+            <!-- <a class="weui-cell weui-cell_access" href="javascript:;">
+              <div class="weui-cell__hd">
+                <p><span class="tit-2">邮箱号</span></p>
+              </div>
+              <div class="weui-cell__bd">
+                <input class="weui-input" type="text" v-model="userInfo.email">
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a> -->
+            <!-- <div class="weui-cell">
+              <div class="weui-cell__bd"><p><span class="tit-2">所在地区</span>{{userInfo.areaName}}</p></div>
+            </div> -->
+            <!-- <a class="weui-cell weui-cell_access" href="javascript:;">
+              <div class="weui-cell__hd">
+                <p><span class="tit-2">单位名称</span></p>
+              </div>
+              <div class="weui-cell__bd">
+                <input class="weui-input" type="text" v-model="userInfo.unitName">
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <div class="weui-tabbar hb-tabbar" @click="changeUserInfoAction()"><a href="javascript:;" class="hb-btn">确认修改</a></div> -->
+  </div>
+</template>
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+</style>
+<script>
+  require('../../../design/styles/webstyle.less')
+  import * as storeTypes from '../../store/types'
+  export default{
+    components: {},
+    mounted () {
+      for (let key in this.$store.getters.userInfo) {
+        this.userInfo[key] = this.$store.getters.userInfo[key]
+      }
+    },
+    data () {
+      return {
+        userInfo: {
+          account: '',
+          accountName: '',
+          areaCode: '',
+          areaName: '',
+          displayPhotoUrl: '',
+          education: '',
+          email: '',
+          fillSecretCerNumber: false,
+          grade: '',
+          graduationMajor: '',
+          identityCardNo: '',
+          isCompletionInfo: 0,
+          jobTitle: '',
+          jobTitleId: '',
+          participatingMajor: '',
+          phoneNumber: '',
+          qq: '',
+          reviewUnit: '',
+          secretCerNumber: '',
+          sex: 0,
+          unitName: '',
+          university: '',
+          userId: '',
+          userName: ''
+        }
+      }
+    },
+    methods: {
+      checkDataCorrect () {
+        var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/
+        if (this.userInfo.email.trim().length) {
+          if (!reg.test(this.userInfo.email)) {
+            this.toast('邮箱格式不对，请重新输入！')
+            return false
+          }
+        }
+        return true
+      },
+      changeUserInfoAction () {
+        if (!this.checkDataCorrect()) {
+          return
+        }
+        this.showLoading('修改中...')
+        let param = {
+          userInfo: this.userInfo
+        }
+        this.$store.dispatch(storeTypes.ACCOUNT_UPDATE_USERINFO, param).then(retObj => {
+          if (retObj.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.hideLoading()
+            this.toast('信息修改成功！')
+          } else {
+            this.toast(retObj.head.message)
+          }
+        })
+      }
+    }
+  }
+</script>

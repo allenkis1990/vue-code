@@ -1,0 +1,80 @@
+//@media screen and (max-width: 320px) {
+//  .container{
+//    .weui-media-box__desc{
+//      font-size: 12px;
+//    }
+//    .hb-panel-1 .weui-panel__hd{
+//      font-size: 11px;
+//    }
+//
+//    .hb-panel-3 .weui-media-box_appmsg {
+//      .weui-media-box__hd{
+//        width: 90px;
+//        height: 56px;
+//      }
+//    }
+//    .hb-panel-3 .weui-media-box__title{
+//      font-size: 14px;
+//    }
+//    .weui-cell__bd{
+//      .bd-items{
+//        .btn-bar{
+//          display: block;
+//          margin-top: 5px;
+//        }
+//      }
+//    }
+//    .hb-order-status{
+//      font-size: 13px;
+//
+//      .hb-ico{
+//        margin-right: 5px;
+//      }
+//      .time{
+//        font-size: 12px;
+//      }
+//
+//      .btn-bar{
+//        .hb-btn-s{
+//          width: 64px;
+//          font-size: 12px;
+//        }
+//      }
+//    }
+//    .hb-form-box{
+//      .weui-cells{
+//        font-size: 13px;
+//      }
+//      .weui-label{
+//        width: 65px;
+//      }
+//    }
+//  }
+//}
+
+@media screen and  (min-width: 640px){
+  html {
+    font-size: 85.4px;
+  }
+}
+
+@media screen and  (min-width: 414px) and (max-width: 639px){
+  html {
+    font-size: 55.2px;
+  }
+}
+
+@media screen and (min-width:375px) and (max-width:413px){
+  html {
+    font-size: 50px;
+  }
+}
+
+@media screen and (min-width:320px) and (max-width:374px){
+  html {
+    font-size: 42.7px;
+  }
+}
+
+
+

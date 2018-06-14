@@ -1,0 +1,540 @@
+<template>
+  <!--<div class="container">
+    <div class="hb-header-box">
+      <div class="header-left" @click="drawerVisibilityEvent">
+        <a href="javascript:void(0);" class="hb-ico ico-menu"></a>
+      </div>
+      <div class="header-tit">班级列表</div>
+      &lt;!&ndash; <div class="header-right" @click="rightEvent" v-if="!$store.getters.hasLogin">
+        <a href="javascript:void(0);" class="header-txt">登录/注册</a>
+      </div> &ndash;&gt;
+    </div>
+    &lt;!&ndash;年度选择&ndash;&gt;
+    &lt;!&ndash;/年度选择&ndash;&gt;
+    <div class="hb-year-box" style="height:45px;">
+      <div class="year-tit">年度</div>
+      <scroller class="year-bd" lock-y scrollbar-x :bounce=false :scrollbar-x=false>
+        <tab :style="tabStyle"
+             :scroll-threshold="scrollThreshold"
+             bar-active-color="#cb1919"
+             :line-width="2"
+             :custom-bar-width="getBarWidth">
+          <tab-item v-for="(item,index) in yearList" :key="index" :selected="index === 0"
+                    @click.native="tabItemEvent(item)">
+            {{item.skuPropertyValueName}}
+          </tab-item>
+        </tab>
+      </scroller>
+    </div>
+    &lt;!&ndash;/年度选择&ndash;&gt;
+    &lt;!&ndash;班级列表&ndash;&gt;
+    <scroller
+      style="padding-top: 87px; box-sizing: border-box;"
+      :height="scrollerHeight"
+      lock-x
+      scrollbar-y
+      use-pulldown
+      @on-pulldown-loading="refreshData" v-model="scroller" ref="scroller">
+      <div class="weui-panel weui-panel_access hb-panel-3">
+        <no-data v-if="!classList.length"></no-data>
+        <div class="weui-panel__bd" v-for="(item,index) in classList" :key="index" @click="goClassDetail(item)">
+          <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="iamgeUrl(item)">
+              &lt;!&ndash;<span class="label">{{classState}}</span>&ndash;&gt;
+            </div>
+            <div class="weui-media-box__bd">
+              <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+              <p class="weui-media-box__desc">年度：{{skuPropertyValue(item, '继续教育年度')}}年</p>
+              <p class="weui-media-box__desc">
+                科目：{{skuPropertyValue(item, '科目')}}</p>
+              <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+            </div>
+            &lt;!&ndash; 有优惠 &ndash;&gt;
+            &lt;!&ndash;<div class="price" v-if="item.haveDiscount">
+              <div class="now-price"><span class="activity-label">优惠中</span>￥<span class="num">{{item.dealPrice}}</span><span class="old-price">￥{{item.originalPrice}}</span></div>
+            </div>&ndash;&gt;
+            &lt;!&ndash; 无优惠 &ndash;&gt;
+            <div class="price">
+              ￥<span class="num">{{item.amount}}</span>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div slot="pulldown" class="xs-plugin-pulldown-container xs-plugin-pulldown-down"
+           style="position: absolute; width: 100%; height: 40px; line-height: 40px; top: -60px; text-align: center;">
+        <span v-show="scroller.pulldownStatus === 'default'"></span>
+        <span class="pulldown-arrow" v-show="scroller.pulldownStatus === 'down' || scroller.pulldownStatus==='up'"
+              :class="{'rotate': scroller.pulldownStatus === 'up'}"
+              style="font-size: 16px;font-weight: bold;">↓</span>
+        <div v-show="scroller.pulldownStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+              刷新中...
+              </span>
+          </p>
+        </div>
+      </div>
+    </scroller>
+    &lt;!&ndash;/班级列表&ndash;&gt;
+
+    &lt;!&ndash;返回顶部&ndash;&gt;
+    <a href="javascript:void(0);" class="hb-go-top" @click="goTopEvent">
+      <img src="../../../design/images/icon-top.png">
+    </a>
+    &lt;!&ndash;/返回顶部&ndash;&gt;
+  </div>-->
+
+  <div class="contain">
+    <div class="hb-header-box">
+      <!--<div class="header-left"><a class="hb-ico ico-menu"></a></div>-->
+      <div class="header-tit">发现培训</div>
+      <!--<div class="header-right"><a class="header-txt">登录/注册</a></div>-->
+    </div>
+    <div class="hb-tab-tit">
+      <div class="tab-tit-items"
+           @click="clickTab(item)"
+           :class="{'current':item.type===tabType}"
+           v-for="(item,index) in tabList"><span class="items-name">{{item.name}}</span>
+        <img class="current-img" src="../../../design/images/tab-current-bg.jpg" />
+      </div>
+    </div>
+    <!--<div class="screening-bar">
+      <div class="screening-items selected">
+        <div class="items-tit">2017年</div>
+      </div>
+      <div class="screening-items">
+        <div class="items-tit">专业</div>
+      </div>
+      <div class="screening-items">
+        <div class="items-tit">培训结果</div>
+      </div>
+    </div>-->
+    <sku-search v-show="tabType==='TRAINING_CLASS_GOODS'"
+                ref="TRAINING_CLASS_GOODS"
+                @findClassList="findTrainClassList"
+                category-type="TRAINING_CLASS_GOODS"></sku-search>
+    <sku-search v-show="tabType==='COURSE_SUPERMARKET_GOODS'"
+                ref="COURSE_SUPERMARKET_GOODS"
+                @findClassList="findSelfPickClassList"
+                category-type="COURSE_SUPERMARKET_GOODS"></sku-search>
+
+
+
+    <scroller
+      style="box-sizing: border-box;"
+      :height="scrollerHeight"
+      lock-x
+      scrollbar-y
+      use-pulldown
+      use-pullup
+      @on-pullup-loading="loadMoreFn"
+      @on-pulldown-loading="refreshData"
+      v-model="scroller" ref="scroller">
+      <div class="hb-wrap-box pb100">
+        <div class="hb-panel" v-show="tabType==='TRAINING_CLASS_GOODS'">
+          <no-data v-if="!trainClassList.length"></no-data>
+          <div class="hb-panel-bd" v-if="trainClassList.length">
+            <div class="hb-media-box"
+                 @click="goClassDetail"
+                 v-for="(item,index) in trainClassList">
+              <div class="hb-media-box-hd"><img :src="item.photoPath" class="hb-media-box-thumb">
+                <div class="label" v-if="item.hasBuy">已报名</div>
+              </div>
+              <div class="hb-media-box-bd">
+                <div class="hb-media-box-title">{{item.skuName}}</div>
+                <div class="hb-media-box-desc">年度：{{getSkuValueName(item.skuPropertyNameList,'年度')}}年</div>
+                <div class="hb-media-box-desc">科目：{{getSkuValueName(item.skuPropertyNameList,'科目')}}</div>
+                <div class="hb-media-box-desc">学时：{{item.trainingPeriod}}</div>
+              </div>
+              <div class="price">
+                <div class="now-price">￥<span class="num">{{item.originalPrice}}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="loading-tips" v-if="trainClassList.length&&trainClassTotalSize===0"><span class="line"></span><span class="txt">已经到最底部啦</span><span class="line"></span>
+          </div>
+        </div>
+
+        <div class="hb-panel" v-show="tabType==='COURSE_SUPERMARKET_GOODS'">
+          <no-data v-if="!selfClassList.length"></no-data>
+          <div class="hb-panel-bd" v-if="selfClassList.length">
+            <div class="hb-media-box"
+                 @click="goClassDetail"
+                 v-for="(item,index) in selfClassList">
+              <div class="hb-media-box-hd"><img :src="iamgeUrl" class="hb-media-box-thumb">
+                <div class="label" v-if="item.hasBuy">已报名</div>
+              </div>
+              <div class="hb-media-box-bd">
+                <div class="hb-media-box-title">{{item.skuName}}</div>
+                <div class="hb-media-box-desc">年度：{{getSkuValueName(item.skuPropertyNameList,'年度')}}年</div>
+                <div class="hb-media-box-desc">科目：{{getSkuValueName(item.skuPropertyNameList,'科目')}}</div>
+                <div class="hb-media-box-desc">学时：{{item.trainingPeriod}}</div>
+              </div>
+              <div class="price">
+                <div class="now-price">￥<span class="num">{{item.originalPrice}}</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="loading-tips" v-if="selfClassList.length&&selfPickTotalSize===0"><span class="line"></span><span class="txt">已经到最底部啦</span><span class="line"></span>
+          </div>
+        </div>
+      </div>
+      <div slot="pulldown" class="xs-plugin-pulldown-container xs-plugin-pulldown-down"
+           style="position: absolute; width: 100%; height: 40px; line-height: 40px; top: 90px; text-align: center;">
+        <span v-show="scroller.pulldownStatus === 'default'"></span>
+        <span class="pulldown-arrow" v-show="scroller.pulldownStatus === 'down' || scroller.pulldownStatus==='up'"
+              :class="{'rotate': scroller.pulldownStatus === 'up'}"
+              style="font-size: 16px;font-weight: bold;">↓</span>
+        <div v-show="scroller.pulldownStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+              刷新中...
+              </span>
+          </p>
+        </div>
+      </div>
+
+      <!--<div slot="pullup" style="position: absolute; width: 100%; height: 40px; line-height: 40px; bottom: 20px; text-align: center;color:#999;font-size:.26rem">
+        <div v-show="scroller.pullupStatus === 'loading'">
+          加载更多...
+        </div>
+      </div>-->
+      <div slot="pullup" class="xs-plugin-pullup-container xs-plugin-pullup-up"
+           style="position: absolute; width: 100%; height: 40px; bottom: 10px; text-align: center;">
+        <load-more :show-loading="false" v-if="((tabType==='TRAINING_CLASS_GOODS'&&trainClassTotalSize>0)||(tabType==='COURSE_SUPERMARKET_GOODS'&&selfPickTotalSize)) && scroller.pullupStatus === 'default'" :tip="'上拉加载更多'"
+                   background-color="#F4F4F4"></load-more>
+        <span class="pullup-arrow"
+              v-show="(scroller.pullupStatus === 'up'||scroller.pullupStatus === 'down') && !noMore"
+              :class="{'rotate':scroller.pullupStatus === 'down'}"
+              style="font-size: 16px;font-weight: bold;">↑</span>
+        <div v-show="scroller.pullupStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+      加载中...
+      </span>
+          </p>
+        </div>
+      </div>
+    </scroller>
+
+
+
+
+
+    <div class="layer-box" @click="goTopEvent">
+      <div class="a-items"><img
+        src="../../../design/images/icon-top.png"
+        alt=" " class="img"></div>
+    </div>
+  </div>
+
+
+</template>
+
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+  @import "../../../design/styles/webstyle.less";
+</style>
+
+<script>
+  import { Tab, TabItem, Scroller, Spinner, LoadMore, InlineLoading } from 'vux'
+  import NoData from '../../components/NoData.vue'
+  import * as storeTypes from '../../store/types'
+  import skuSearch from '@/views/home/skuSearchComponent/skuSearchComponent.vue'
+  import utils from '@/common/util/Utils'
+  import constant from '@/global/constants/AppConstant'
+  export default {
+    components: {
+      Tab,
+      TabItem,
+      Scroller,
+      Spinner,
+      LoadMore,
+      InlineLoading,
+      NoData,
+      skuSearch
+    },
+    data () {
+      return {
+        scrollerHeight: '',
+        scroller: {
+          pullupStatus: 'default',
+          pulldownStatus: 'default'
+        },
+//      0加载 1下拉加载 2加载更多
+        scorllerStatus: 0,
+        noMore: false,
+        orderNo: '',
+        tabList: [
+          {name: '培训班学习', type: 'TRAINING_CLASS_GOODS'},
+          {name: '自主选课学习', type: 'COURSE_SUPERMARKET_GOODS'}
+        ],
+        tabType: 'TRAINING_CLASS_GOODS', // 默认培训班tab
+        trainClassList: [],
+        selfClassList: [],
+        loadMore: false,
+        trainClassPager: {pageNo: 1, pageSize: 10},
+        selfPickPager: {pageNo: 1, pageSize: 10},
+        trainClassTotalSize: 0,
+        selfPickTotalSize: 0
+      }
+    },
+    computed: {
+      /**
+       * 年度tab的样式
+       * @returns {{width: string, height: string, disabled: string}}
+       */
+      tabStyle () {
+        return {
+          width: this.yearList.length * this.tabItem.width + 'px',
+          height: this.tabItem.height + 'px',
+          disabled: '#FFFFFF'
+        }
+      },
+      scrollThreshold() {
+        return this.yearList.length;
+      },
+      /**
+       * 年份数据
+       * @returns {*}
+       */
+      yearList () {
+        if (this.$store.state.productModule.yearList === undefined || this.$store.state.productModule.yearList === '') {
+          return []
+        }
+        return this.$store.state.productModule.yearList
+      },
+      /**
+       * 班级数据
+       * @returns {*}
+       */
+      classList () {
+        let classList = this.$store.state.productModule.trainingList
+        if (classList === undefined || classList === null) {
+          return []
+        }
+        return classList
+      },
+      classState (trainingItemStatus) {
+        if (trainingItemStatus === 0) {
+          return ''
+        } else if (trainingItemStatus === 1) {
+          return '退班中'
+        } else if (trainingItemStatus === 2) {
+          return '失效'
+        }
+      }
+    },
+    mounted () {
+//      console.log(1111111);
+      this.scrollerHeight = (window.outerHeight || window.innerHeight) + 'px';
+//      this.requestYear();
+    },
+    methods: {
+      initPager: function () {
+        this.trainClassPager = {pageNo: 1, pageSize: 10}
+        this.selfPickPager = {pageNo: 1, pageSize: 10}
+      },
+      getSkuValueName: function (skuArr,skuName) {
+        if (!skuArr) {
+          return ''
+        }
+        var str = ''
+        skuArr.forEach(function (item) {
+          if (item.skuPropertyName === skuName) {
+            str = item.skuPropertyValueName
+          }
+        })
+        return str
+      },
+      loadMoreFn: function () {
+        var that = this
+        this.scorllerStatus = 2
+        var params = null
+        if (this.tabType === 'TRAINING_CLASS_GOODS') {
+          this.trainClassPager.pageNo++
+          params = {
+            pageNo: that.trainClassPager.pageNo,
+            pageSize: that.trainClassPager.pageSize,
+            skuPropertySearchList: that.$refs.TRAINING_CLASS_GOODS.skuPropertySearchList
+          }
+          this.$refs.TRAINING_CLASS_GOODS.refreshClassList(params, constant.apiUrl.classListModule.trainClass)
+        } else {
+          this.selfPickPager.pageNo++
+          params = {
+            pageNo: that.selfPickPager.pageNo,
+            pageSize: that.selfPickPager.pageNo,
+            skuPropertySearchList: that.$refs.COURSE_SUPERMARKET_GOODS.skuPropertySearchList
+          }
+          this.$refs.COURSE_SUPERMARKET_GOODS.refreshClassList(params, constant.apiUrl.classListModule.self)
+        }
+        console.log('我已经到底部')
+      },
+      findTrainClassList: function (params,url) {
+        var type = 'post'
+        console.log(params,url,'培训班')
+        if (this.scorllerStatus === 0) {
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+        }
+        utils.getAjaxData(type, params, url).then(res => {
+          this.loadingUIState();
+          if (this.$refs.scroller !== undefined && this.scorllerStatus !== 2) this.$refs.scroller.reset({top: 0})
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            console.log(res.data, '培训班列表')
+            this.trainClassTotalSize = res.data.commodityList.length
+//            2是加载更多
+            if (this.scorllerStatus === 2) {
+              this.trainClassList = this.trainClassList.concat(res.data.commodityList)
+              this.scorllerStatus = 0
+            } else {
+              this.trainClassList = res.data.commodityList
+              this.initPager()
+            }
+          }
+        }).catch(e => {
+          this.loadingUIState();
+          console.log(e)
+        })
+      },
+      findSelfPickClassList: function (params,url) {
+        var type = 'post'
+        console.log(params,url,'自主选课')
+        if (this.scorllerStatus === 0) {
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+        }
+        utils.getAjaxData(type, params, url).then(res => {
+          this.loadingUIState();
+          if (this.$refs.scroller !== undefined && this.scorllerStatus !== 2) this.$refs.scroller.reset({top: 0})
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            console.log(res.data, '自主选课列表')
+            this.selfPickTotalSize = res.data.commodityList.length
+//            2是加载更多
+            if (this.scorllerStatus === 2) {
+              this.selfClassList = this.selfClassList.concat(res.data.commodityList)
+              this.scorllerStatus = 0
+            } else {
+              this.selfClassList = res.data.commodityList
+              this.initPager()
+            }
+          }
+        }).catch(e => {
+          this.loadingUIState();
+          console.log(e)
+        })
+      },
+      clickTab: function (item) {
+        console.log(item)
+        if (this.tabType === item.type) {
+          return false
+        }
+        if (this.$refs.scroller !== undefined) this.$refs.scroller.reset({top: 0})
+        this.tabType = item.type;
+      },
+      loadingUIState () {
+        if (this.scorllerStatus === 1) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePulldown()
+            this.scroller.pulldownStatus = 'default'
+            this.scorllerStatus = 0
+            return
+          }
+        }
+        if (this.scorllerStatus === 2) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePullup()
+            this.scroller.pullupStatus = 'default'
+            return
+          }
+        }
+        this.$vux.loading.hide()
+      },
+      /**
+       * 上拉刷新
+       */
+      refreshData () {
+        console.log(this.scroller)
+        console.log('下拉刷新！！！')
+        this.scorllerStatus = 1
+        var that = this
+        var TRAINING_CLASS_GOODS_PARAMS = {
+          pageNo: 1,
+          pageSize: 10,
+          skuPropertySearchList: that.$refs.TRAINING_CLASS_GOODS.skuPropertySearchList
+        }
+        var COURSE_SUPERMARKET_GOODS_PARAMS = {
+          pageNo: 1,
+          pageSize: 10,
+          skuPropertySearchList: that.$refs.COURSE_SUPERMARKET_GOODS.skuPropertySearchList
+        }
+//       下拉刷新自主选课列表 培训班列表
+        this.$refs.TRAINING_CLASS_GOODS.refreshClassList(TRAINING_CLASS_GOODS_PARAMS,constant.apiUrl.classListModule.trainClass)
+        this.$refs.COURSE_SUPERMARKET_GOODS.refreshClassList(COURSE_SUPERMARKET_GOODS_PARAMS,constant.apiUrl.classListModule.self)
+//        console.log(this.$refs.TRAINING_CLASS_GOODS.skuPropertySearchList)
+//        console.log(this.$refs.COURSE_SUPERMARKET_GOODS.skuPropertySearchList)
+      },
+      /**
+       * 滚动顶部  点击事件
+       */
+      goTopEvent () {
+        this.$refs.scroller.reset({top: 0})
+      },
+      /**
+       * 班级列表的item  点击事件
+       */
+      goClassDetail (item) {
+        this.$router.push({
+          path: '/classDetail'
+//          query: {
+//            yearObject: this.skuPropertyObeject(item, '继续教育年度').skuPropertyValueName,
+//            amount: item.amount,
+//            skuId: item.skuId
+//          }
+        })
+      },
+      iamgeUrl (item) {
+        if (item.photoPath === undefined) {
+          return require('../../../design/images/course-img.jpg')
+        }
+        return item.photoPath
+      },
+      skuPropertyValue (item, property) {
+        let skuPropertyObeject = this.skuPropertyObeject(item, property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null) {
+          return skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyValueCOpy (item, property) {
+        let skuPropertyObeject = this.skuPropertyObeject(item, property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null && skuPropertyObeject.skuPropertyValueName !== '') {
+          return '/' + skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyObeject (item, property) {
+        let skuPropertyNameList = item.skuPropertyNameList
+        if (skuPropertyNameList === undefined || skuPropertyNameList === null) {
+          return ''
+        }
+        for (let i = 0; i < skuPropertyNameList.length; i++) {
+          if (skuPropertyNameList[i].skuPropertyName === property) {
+            return skuPropertyNameList[i]
+          }
+        }
+        return ''
+      }
+    }
+  }
+</script>

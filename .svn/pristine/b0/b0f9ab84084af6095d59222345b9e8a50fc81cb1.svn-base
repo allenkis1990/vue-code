@@ -1,0 +1,180 @@
+<template>
+  <div class="hb-media-box hb-media-box-1">
+          <div class="hb-media-box-hd">
+            <img class="hb-media-box-thumb" :src="subItem.photoPath || '../../../design/images/course-img.jpg'" />
+          </div>
+          <div class="hb-media-box-bd">
+            <div class="hb-media-box-title">{{subItem.skuName}}</div>
+            <div class="hb-media-box-desc">年度：{{getSkuPropertyValueNameByKeyName('年度', subItem)}}年</div>
+            <div class="hb-media-box-desc">科目：{{getSkuPropertyValueNameByKeyName('科目', subItem)}}</div>
+            <div class="hb-media-box-desc">学时：{{subItem.trainingPeriod}}</div>
+          </div>
+          <div>
+          <div class="price">￥
+            <span class="num">{{subItem.totalAmount}}元</span>
+          </div>
+          <div class="weui-panel__op bor-t" v-if="isShowSubBottomBar()" style="padding-bottom:0">
+            <div class="hb-btn-s" @click="subButtonAction('seeRefund', $event)" v-if="isShowSubRefundButton(subItem)">查看退款</div>
+            <div class="hb-btn-s" @click="subButtonAction('changeClassRecord', $event)" v-if="isShowSubChangeClassRecordButton(subItem)">换班记录</div>
+          </div>
+        </div>
+  </div>
+</template>
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+
+  .weui-panel__op_sub {
+    text-align: right;
+    padding: 0px 15px;
+    background-color: white;
+  }
+
+  .hb-btn-s-sub-cell {
+    width: 75px;
+    height: 30px;
+    line-height: 2.5;
+    text-align: center;
+    border: 1px solid #ddd;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    border-radius: 30px;
+    display: inline-block;
+    color: #666;
+    font-size: 13px;
+    margin-top: 7px;
+    margin-bottom: 7px;
+  }
+</style>
+<script>
+  export default {
+    components: {},
+    props: {
+      channel: String,
+      overThree: Boolean,
+      subItem: {
+        type: Object,
+        require: false,
+        default: function () {
+          return {
+            subOrderNo: '',
+            subOrderStatus: 1,
+            skuId: '',
+            skuIdName: '',
+            photoPath: '',
+            trainingPeriod: 0,
+            totalAmount: 0,
+            swapOut: false,
+            skuPropertyNameList: [
+              {
+                skuPropertyId: '',
+                skuPropertyName: '科目',
+                skuPropertyValueId: '',
+                skuPropertyValueName: ''
+              },
+              {
+                skuPropertyId: '',
+                skuPropertyName: '专业',
+                skuPropertyValueId: '',
+                skuPropertyValueName: ''
+              },
+              {
+                skuPropertyId: '',
+                skuPropertyName: '继续教育年度',
+                skuPropertyValueId: '',
+                skuPropertyValueName: '2017'
+              }
+            ]
+          }
+        }
+      },
+      subItemsCount: {
+        type: Number,
+        default: 0
+      }
+    },
+    data () {
+      return {}
+    },
+    methods: {
+      isShowSubRefundButton (subItem) {
+        if (!subItem) {
+          return false
+        }
+        if (subItem.status === 8 || subItem.status === 9 || subItem.exitRefundOrder) {
+          return true
+        } else {
+          return false
+        }
+      },
+      isShowSubChangeClassRecordButton (subItem) {
+        if (!subItem) {
+          return false
+        }
+        if (subItem.swapOut) {
+          return true
+        } else {
+          return false
+        }
+      },
+      /** 通过keyname获取对应的sku值 */
+      getSkuPropertyValueNameByKeyName (keyName, item) {
+        if (item === undefined || item.skuPropertyNameList === undefined) {
+          return ''
+        }
+        if (item.skuPropertyNameList.length === 0) {
+          return ''
+        }
+        let propertyName = ''
+        for (let i = 0; i < item.skuPropertyNameList.length; i++) {
+          let skuPropertyObject = item.skuPropertyNameList[i]
+          if (skuPropertyObject.skuPropertyName === keyName) {
+            propertyName = skuPropertyObject.skuPropertyValueName
+          }
+        }
+        return propertyName
+      },
+      getSubjectShowText (subItem) {
+        if (this.getSkuPropertyValueNameByKeyName('科目', subItem).length && this.getSkuPropertyValueNameByKeyName('专业', subItem).length) {
+          return this.getSkuPropertyValueNameByKeyName('科目', subItem) + '/' + this.getSkuPropertyValueNameByKeyName('专业', subItem)
+        } else if (this.getSkuPropertyValueNameByKeyName('科目', subItem).length && !this.getSkuPropertyValueNameByKeyName('专业', subItem).length) {
+          return this.getSkuPropertyValueNameByKeyName('科目', subItem)
+        } else if (!this.getSkuPropertyValueNameByKeyName('科目', subItem).length && this.getSkuPropertyValueNameByKeyName('专业', subItem).length) {
+          return this.getSkuPropertyValueNameByKeyName('专业', subItem)
+        } else {
+          return ''
+        }
+      },
+      getShowPhotoPath () {
+        if (this.subItem !== undefined && this.subItem !== null) {
+          if (this.subItem.photoPath !== undefined && this.subItem.photoPath.trim() !== '') {
+            this.subItem.photoPath
+          }
+        }
+        return require('../../../design/images/course-img.jpg')
+      },
+      isShowSubBottomBar () {
+        if ((this.subItem.subOrderStatus === 7 || this.subItem.swapOut) && !this.overThree) {
+          return true
+        }
+        return false
+      },
+      subButtonAction (type, event) {
+        if (event) {
+          event.stopPropagation()
+        }
+        switch (type) {
+          // 查看退款
+          case 'seeRefund': {
+            this.$emit('on-subSeeRefund')
+            break
+          }
+          // 查看换班记录
+          case 'changeClassRecord': {
+            this.$emit('on-subChangeClassRecord')
+            break
+          }
+        }
+      }
+    }
+  }
+</script>

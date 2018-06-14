@@ -1,0 +1,197 @@
+import * as storeTypes from '../types'
+import { request } from '../fetch'
+
+const state = {
+  classDetail: {},
+  trainingList: [],
+  skuPropertySearch: {},
+  courseWrapList: [],
+  yearList: []
+}
+const actions = {
+  /**
+   * 获取商品详细信息
+   */
+  [storeTypes.PRODUCT_GET_DETAIL_INFO] ({commit}, param) {
+    var type = 'GET'
+    var url = 'mobile/home/mobileCommodity/findTrainClassCommodityInfo'
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  },
+  /**
+   * 请求 首页班级年度数组
+   * @param commit
+   * @returns {Promise.<TResult>|*}
+   */
+  [storeTypes.PRODUCE_CLASS_YEARS_REQUEST] ({commit}) {
+    let type = 'get'
+    let url = 'mobile/home/mobileCommodity/findCommodityTrainingYearList'
+    let param = {
+      skuPropertyName: '继续教育年度'
+    }
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          commit(storeTypes.PRODUCE_CLASS_YEARS_SET, data.data.skuPropertyValueList)
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  },
+  /**
+   * 请求 首页班级列表
+   * @param commit
+   * @param params
+   * @returns {Promise.<TResult>|*}
+   */
+  [storeTypes.PRODUCE_CLASS_LIST_REQUEST] ({commit}, params) {
+    let type = 'get'
+    let url = 'mobile/home/mobileCommodity/findTrainClassCommodityList'
+    let param = {
+      skuPropertySearchList: []
+    }
+    if (params.skuPropertyValueId !== '-1') {
+      let a = {
+        skuPropertyName: '继续教育年度',
+        skuPropertyValueId: params.skuPropertyValueId
+      }
+      param.skuPropertySearchList.push(a)
+    }
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          commit(storeTypes.PRODUCE_CLASS_LIST_SET, data.data.commodityList)
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  },
+  /**
+   * 首页 获取商品班级详细信息
+   */
+  [storeTypes.PRODUCT_CLASS_DETAIL_INFO_REQUEST] ({commit}, param) {
+    var type = 'get'
+    var url = 'mobile/home/mobileCommodity/findTrainClassCommodityInfo'
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          commit(storeTypes.PRODUCT_CLASS_DETAIL_INFO_SET, data.data)
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  },
+  /**
+   * 获取班级的课程包
+   * @param commit
+   * @param param
+   * @returns {Promise.<TResult>|*}
+   */
+  [storeTypes.PRODUCT_CLASS_COURSEWRAP_LIST_REQUEST] ({commit}, params) {
+    var type = 'get'
+    var url = 'mobile/home/mobileCommodity/findTrainingCoursePoolList'
+    let param = {
+      trainingClassId: params.trainingClassId
+    }
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          commit(storeTypes.PRODUCT_CLASS_COURSEWRAP_LIST_SET, data.data)
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  },
+  /**
+   * 获取课程列表
+   * @param commit
+   * @param params
+   * @returns {Promise.<TResult>|*}
+   */
+  [storeTypes.PRODUCT_CLASS_COURSELIST_REQUEST] ({commit}, params) {
+    let type = 'get'
+    let url = 'mobile/home/mobileCommodity/findTrainingCourseList'
+    let param = {
+      trainingClassId: params.trainingClassId,
+      electiveWrapId: params.electiveWrapId,
+      pageNo: params.pageNo,
+      pageSize: params.pageSize
+    }
+    return request(type, param, url)
+      .then(function (data) {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          let courseList = data.data.courseList
+          let electiveWrapId = params.electiveWrapId
+          commit(storeTypes.PRODUCT_CLASS_COURSELIST_SET, {courseList, electiveWrapId})
+          return (data)
+        } else {
+          return (data)
+        }
+      }, function (reason) {
+        return ({head: {code: 700, message: '请求失败'}})
+      })
+  }
+}
+const mutations = {
+  /**
+   * 年度列表
+   * @param state
+   * @param yearList
+   */
+  [storeTypes.PRODUCE_CLASS_YEARS_SET] (state, yearList) {
+    let arry = yearList.slice()
+    let all = {
+      'skuPropertyValueId': '-1',
+      'skuPropertyValueName': '全部'
+    }
+    arry.unshift(all)
+    state.yearList = arry
+  },
+  [storeTypes.PRODUCT_CLASS_DETAIL_INFO_SET] ({commit}, classDetail) {
+    state.classDetail = classDetail
+  },
+  [storeTypes.PRODUCE_CLASS_LIST_SET] (state, trainingList) {
+    state.trainingList = trainingList
+  },
+  [storeTypes.PRODUCE_CLASS_LIST_SEARCH_PROPERTY] (state, searchProperty) {
+    state.skuPropertySearch = searchProperty
+  },
+  [storeTypes.PRODUCT_CLASS_COURSEWRAP_LIST_SET] (state, courseWrapList) {
+    state.courseWrapList = courseWrapList
+  },
+  [storeTypes.PRODUCT_CLASS_COURSELIST_SET] (state, {courseList, electiveWrapId}) {
+    let courseWrapList = state.courseWrapList
+    for (let i = 0; i < courseWrapList.length; i++) {
+      if (courseWrapList[i].electiveWrapId === electiveWrapId) {
+        courseWrapList[i].courseList = courseList
+      }
+    }
+  }
+}
+const getters = {}
+export default {
+  state,
+  getters,
+  actions,
+  mutations
+}

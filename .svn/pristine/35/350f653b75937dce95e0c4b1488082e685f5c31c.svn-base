@@ -1,0 +1,178 @@
+<template>
+  <div>
+    <div class="weui-tabbar"><a href="javascript:;" class="weui-tabbar__item weui-bar__item_on">
+      <div class="weui-tabbar__icon"><img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAMAAACdUboEAAAAflBMVEUAAAAIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpsIrpuGTUH5AAAAKXRSTlMA+mT2LgsOBwPdZ++3W4lImhPTzsFuJz/qrDQX5B2TOSJTTnTWx32DpSsJxHwAAALOSURBVFjD7ZfZtqIwEEUrhJAAMs8gDjjd/P8P9oWg3l4giaRfutv9pmRtT6VWygAfPvxdMFr4MUYcxVeTMtCGWqeY30GpR6hePMsMy7sNI/7Ndmda6+M1x4TPkBbRqqBWm5X8BbZzeDcoa4ovxBdAYdEwUIYevAuXkno5USzXPG25EtivG5DS7HdqOrEpVXCARQ7dF3+TS1a/7pJppHwF213QwhzF6cxXgjZePfEF15LrYGcBgSc0uGENG0Ko7/wueNa7K7keGPW9d29jzMzm/ecBzaC+EIpP2uBeMhjxKNQPiUfjsAvaCEs1GKvBrsvQmuogTt4X13WKzm6zFgRNP2uQro+He3jAal88mF0s497WHH5C9r54uPK8TIyDM1zhFOuTYUKb09m9D/HUKfedvXYzGqdO09+qO5HI57UMZo0C0jrusFq13mPDAF4ZBSwylGu3uwgAZMa8AOt4VnHGRwugq6VGA8dHIN0GSZy2RwCCBDty47epPFFqVmhhP23HYuDFiHNDwdiDQ5NaoYtmncg2GI36Oc0VjaLaTWfBzcaTI4nPGZBc/I+MGdlgzF8bn6VFzEhdNN4eUZ/Y3RyB7C/35MLYDWcmbZaNSBSf0yK0B2mvO/smREdR7tNYj19UkSSj0KR1RILwEttJ6tdAD7fxBDyNecxHQgIzOJNGuP7eGg+UV00mnGel/EHG5EZBEmaBd924M2MxCMof66jUKMeD6+OH4gJ0jaIzznYU5vCHjODZE6GmEYqE82Qi1DFCnaYHWGVEL4yw8NpgLApnjYIVxoGP8R8yOuoXv2GlAzK8t2ePjMh/S+hHIIUYpbIPZxYowOqN4kU5CSio0TilysXMb0EZZu5EjoWAl4LAO1hm9crm9j43Ey3Rd4r3HvfaUFgBaX37qUKP1wL7FFFYCSWBn/y+m3YYEAY6MGJ2u7TE/QbGlbGPGHz48D/zC8UC1tQKuiVgAAAAAElFTkSuQmCC"
+        alt=" "></div>
+      <p class="weui-tabbar__label"><span>我的学习</span></p></a> <a href="javascript:;" class="weui-tabbar__item">
+      <div class="weui-tabbar__icon"><img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAMAAACdUboEAAAAeFBMVEUAAAB3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3c+RLoqAAAAJ3RSTlMACgbm9dpTFOz6uQ7SmvGI4M0qSkI6MSYgo5JieHBcNX9qwaiyRMWLfgarAAADmUlEQVRYw+yV13LjMAxFl02VlOQi927H5///cG15kqwYFSb7mvviGRk8Ai4B6M+vfvUhKYUQ+SJaioek/F+aiOu9swUvFdbt61j8nCri2U3jS19nsfgZb1oWL0SiVGWMqZRK9CvXciq+z6tdCqTKZKfouGqerY7RKTOqeb5ZfI8pl+XzXGLdm/T/enM2eTLLpQwH5gcDqGzbfUZuMwWYQx4KXG6AIosGQqKsADbLMGB9AexeDvuyt8ClDgHO7bNDpqNx06sGOx8Hvk1A7fIQt3cKJvOQDKso0PCoGkfWEw8YgBz0cnXxgCHIy2rAGQeqAYYjFbh+1w8pehc8BnHzs9Okh96aDVzjQOBifWomO76C6albbMBOw3jx+Y4Tr760UIrue9YU5zDgca25v7/8XKAXnSk6yPKgBPcTSLYfhmaw6UpyWqBmQWN6K4D1p+Ezhe5wS5aQyXHeamd4yP5Tp8yglF9LSZ6FjEnOmjXmGb59nI2/hoLNRxMsKxrdWoDcwsxPUtzQboQnorumkfHWg9OshV+0Rs3HVrvipWInvctSKL/sGowc/vZMNLyU+aelgdpf8pANDp1LeFdHk2Wwl22iQ58Gevpg0g9g2tEpJ42TbdMtSTQwdAmfylYdSy1hItrEAnXsBdoUUq9mL0ShPCKoVV/TXFNseS7Nq2Ynu/pAQZuYQ9WKbE+EmUspZxUP3ZednVD5xAWYvluewEk+cy2BpGdfG5i2ne0linVKen4S5d92rHZHQRgIXvmQ0/PEggFb0IhR3/8RraU4kjSZJhj84z5As9vdnZ2ZbomaPS8uAnM8PtqcC5ejrH5IjvQf65vd49L+Y49O5B9JryPdT01qe70EHJBeYx49k+siMYODmsk8Ymc8HAPx+48H/TvD9zrKE0iEtAEg+/ZaRQHYU8ZIUI9a6cUejo/Z6pmgPI5r8uBjxTE8aoeaY0a4r6Yxf/zO7FKX4Llk2sXslRL0FmaX/sFtvqc0LbW3kN3rrj/MqyuhBbjXhFNUa7srLWF/4BSM92TqkeCFKQHwHsrNGlOz7EiCGDItGH80MLtRdtF5HBIvf3T4ty6GfG8NT/DJcbVgPFycVAh9Bg/nWiELIbvQCjPomamaaxZdiNjJd2lXPDlBX8/iAYT7FKKFT/EmLyWBlzKP3zPdk+IhKv3im9WWSdVj3+zj3p7zH0HpwQUU8x+5Ryrj4W5LeKRTfVxRLArn437jG0PcAbnMefJT2LtrAAAAAElFTkSuQmCC"
+        alt=" ">
+      </div>
+      <p class="weui-tabbar__label"><span>发现培训</span></p></a> <a href="javascript:;" class="weui-tabbar__item">
+      <div class="weui-tabbar__icon"><img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAMAAACdUboEAAAAflBMVEUAAAB3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3cjnXxOAAAAKXRSTlMAQAcN+trpA++uMSkSgFH30ocgGcW+ZOO2qKBKO/PMXZhzNi/ejnlqVxrSFrEAAAKQSURBVFjD7ZjbjrIwFEaBUkBUEDkqKJ51vf8L/gyZuaNKm179M+vKpMkH7ere2ej88Xvw9nwhd21oKbHlh7uwk7hM+SHzLEU+1gOZBFy757mARliNTAKildXEfAO5Y5USEruJC1iHVhMzn51nNbGPMOJQ9oo7cqkxpVxOJm4lxhTT9+4Ia1ef6gicQ5Vsx4Q9BEIhe2HWGiRcFbKlY8QRWmeCOCA1ChQbxTvmNX5nuutp2RL/Zdi2jkLlLDNJPKfsPcem7BOspxOfqZnsBhSndY0IDLrP6gjL6aUwIIpNVKu7vyR9GqnerJRt3M8MVPvshWJtPaxZVD3w8k1k76AKFWuXlDrXVl0qVQ8cCC66iZ3EVydKDr2J6mFjFmU/Yaceb9boV/ZdrXoggaNmYPilWr18gdtWU3UDnXrZg1qzjccbDtc3iQVRpZf4Sjlu3yTutGWfRtVKwrum7O2eD2Nngj7l9u0z0UbG7++CjyYn8XE8SO+xO5v445wtBtkPxybeY5RtkbCH0u58v2UsAYvkAaztHmQG0T23GbmM0CNyP0W6B/S4ex/lNGhRzenLnTubdhk6/w0ibltXqDcUiq5tYzH/VnYFA/VTqB5Y1QwUrjezuiufEdVgKE4wklbzvHQ1BEUpgenW9vBBlkUAt27Wnk8gk6F8StiIqdsloYkd5yXhNOcltwW8xh8RQTs9jgVj6fdQzOlU1833N0NYkJ6nN12IsQkc2FznDR5pN27/xmGqxqqI27jZy5AYz7mLC9iH42g4PfPGN/zq+0uyWc0cMv1Fn2QRLLwpdSVEWdI3KZxnT3BEgQ/1cvqka/CDiPn/B+YLRuRFfdQju3x2GSbNrS7OQv3McxnJXes5f/xe/gGDX4s08quQOwAAAABJRU5ErkJggg=="
+        alt=" "></div>
+      <p class="weui-tabbar__label"><span>购物车</span></p></a> <a href="javascript:;" class="weui-tabbar__item">
+      <div class="weui-tabbar__icon"><img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAMAAACdUboEAAAAe1BMVEUAAAB3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3daoazaAAAAKHRSTlMA+faFi1LqSzxfj1l9QiTwdzEqBtCWEtIY1cusNwzEsx3eoHHZvEVlE8Fh8gAAAhtJREFUWMPtmOlurCAYhsVRZ6lHEB33bfb3/q/wMJ2ExKTgoDRpU58/CjFP2L9PnJWVP0d0uQXEfRMS3Fik9yXbHIbk20Rn3LoAiAHPz32NkOcA6Q7e+/QUKLm6z0wIz5ljQBsKZeioKHrgNjhm9ECnnucTcHAM8Qio2hjMMG4I8AuM5FcbB2H0rBmjOI59YTxz8dJaMO5vaZ5eCRBUeV4do8VGn2JEPTgvmg8VXG+sMIY8XvX3ylXRNVqjKyQ1C58w7wq5+TdQc9EaRW2fyTENpPGeQkW1m2gj2cgCT6UxiX0V3JkyerIQ59Koxb7RoNeVHWM9WpyLjQBofXhxLEWJLTWeIJARU/BYagwx5jYsNWbhyRUIF3FdQhefFIIkK4qiCYBjIWi/8QyPdiqGecZ76aqomllGj0DJZV4br0RFvps3jvyfimhqHNssy+LnXGcCC3Od+BWl9HM9ikdwGJZHLozpi6XG1Pq+dgHaH1+cT7BwmonaWqb8D2r9DE+tx5n0p0Yu7+t4vVXBp2dGbpSPt3KKrpkwgp4v7MllIyPXkrznhDFk/6rfqnIzQibyHgZF/rjbq4inIldXlvn12fm0LNMztxC5eNM0n3l43DSxtchVCKP3w/9nVqOJEfbvALT3FHVr854iYUDAEhNfy6g2IeapUNYbA2ohvOqyTZ8AxAgAvqMh8UsYUvoTw8RZR/F2A2kXcmdl5c/wHxkReVrvNfVVAAAAAElFTkSuQmCC"
+        alt=" "></div>
+      <p class="weui-tabbar__label"><span>学习档案</span></p></a> <a href="javascript:;" class="weui-tabbar__item">
+      <div class="weui-tabbar__icon"><img
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAABRCAMAAACdUboEAAAAPFBMVEUAAAB3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3e5ZZ+uAAAAE3RSTlMAwBCAQPCg4CBgkLAwz9BQf3BvL39VkQAAAqJJREFUWMPtV9mS2yAQ9HAfEpLc//+vMeNjo3UgDLuVqlRtv5gS0J5mgGkuP/iPsex7Jsr7vnwLnUkeL/hkvsoXCJ9A4St8KoFRsr4hFzCSmidcWekRXhEfvALrLOViK188f4z1o51LUahzHTc3R0B6BJ4rZZiVfNSWtqgoz540KdwBiFW758Wk/KFUc/BSGJ51Xzd7hPd/E29MusvcAOg3hcoDJONjJsPptrHRHWWM+R4EtSYSkGWJBrDdFhFIbQ2CdDOVvf0U2NY0K5TtONEBSJ1lycJM68vlAJrHTQuzvXKmE9DbDKuEEcxIKN0TMMNI38wYafs2Rvrr3jgAL851F0mY68SZNGtWnd2QpBdFqLu4tZABzb72ITtqpKG9wa34BrfqsrREKyu+xRd0c5N4VeRBLv2SIUQA627UXe6T4mjWULVyoufKq18aVsNdZlCAP9StfZqQ/cib8YkeTDgLjQrrNsMZjs6i4viKwS14Q5n3zle7s8wTfKxLuU/75fUWz5L8i87d5BvPHRMBguF4qjFRb0bVFuGOqzDNjkNCBV3DxzNkxQtZiQ24fgXkydUnzVO9Vlpox5mwLI/99xkusE9lShHhc7Rxp1Tr8BhEAkr6fCqMzkSFKMVwOvej1icNjmTKNGjAy5AaVYbsuPLDtymP9WpEsxk+9gO6Q2PMfAVzXc3yKsshaukNGvoq+iHKg7T9EOV2ZetomLNUDijiitmV7ftVSW52FfgBI/dcasCtC18B0nfUvGfXU24hM+PMC6Gn7J8yUphxCtS7m5BFXnPLQEeZIjDoakbYzPU5vrEfz+V5zXs0oSHUxD2vv3mrLmLGCZYq0n5D4qbFCTkOXHmbKxhCcZsat6KHptLhIn2YOY9rjL6D6NG4fbr84AeMX41hPCJ/uGnpAAAAAElFTkSuQmCC"
+        alt=" "></div>
+      <p class="weui-tabbar__label"><span>我的</span></p></a>
+    </div>
+    <transition
+      @after-enter="$vux.bus && $vux.bus.$emit('vux:after-view-enter')"
+      :name="'vux-pop-' + (direction === 'forward' ? 'in' : 'out')">
+      <router-view class="router-view"></router-view>
+    </transition>
+  </div>
+
+  <!--<div style="height:100%;">
+    <drawer
+      width="180px;"
+      :show.sync="$store.state.drawerVisibility"
+      :show-mode="showModeValue"
+      :placement="showPlacementValue"
+      :drawer-style="{'background-color':'#38373d', width: '180px'}">
+      <div slot="drawer">
+        <div class="hb-popover">
+          <div class="popover-bd">
+            &lt;!&ndash;/登录&ndash;&gt;
+            <div class="user-img-box">
+              <img class="user-img" @click="gotoPage('/demo/mine')">
+              <a href="javascript:;" class="weui-btn weui-btn_mini weui-btn_default hd-btn"
+                 v-if="!$store.getters.hasLogin" @click="loginEvent">登 录</a>
+            </div>
+            &lt;!&ndash;/登录&ndash;&gt;
+            <div class="hb-menu-box">
+              <a href="javascript:void(0);" :class="[itemStyle('/demo/home')]" @click="gotoPage('/demo/home')">
+                <span class="hb-ico ico-home"></span>首页
+              </a>
+              <a href="javascript:void(0);" :class="[itemStyle('/demo/orderList')]"
+                 @click="gotoPage('/demo/orderList')">
+                <span class="hb-ico ico-list"></span>报名清单
+              </a>
+              &lt;!&ndash; <a href="javascript:void(0);" :class="[itemStyle('/demo/cerList')]" @click="gotoPage('/demo/cerList')">
+                <span class="hb-ico ico-prove"></span>培训证明
+              </a> &ndash;&gt;
+              &lt;!&ndash; V1.0.0修复版本隐藏 &ndash;&gt;
+              &lt;!&ndash; <a href="javascript:void(0);" :class="[itemStyle('/demo/myClass')]" @click="gotoPage('/demo/myClass')">
+                <span class="hb-ico ico-class"></span>我的班级
+              </a> &ndash;&gt;
+              &lt;!&ndash; <a href="javascript:void(0);" :class="[itemStyle()]" @click="openApp()">
+                <span class="hb-ico ico-app"></span>APP学习
+              </a>
+              <a href="javascript:void(0);" class="menu-items" @click="exitAppEvent()">
+                <span class="hb-ico ico-exit"></span>退出登录
+              </a> &ndash;&gt;
+            </div>
+          </div>
+        </div>
+      </div>
+      <transition
+        @after-enter="$vux.bus && $vux.bus.$emit('vux:after-view-enter')"
+        :name="'vux-pop-' + (direction === 'forward' ? 'in' : 'out')">
+        <router-view class="router-view"></router-view>
+      </transition>
+    </drawer>
+  </div>-->
+</template>
+
+<style lang="less">
+  @import "../../design/styles/webstyle.less";
+</style>
+
+<script>
+  import * as storeTypes from '../store/types'
+  //  import AppUtil from '../common/util/AppUtil'
+  import {
+    Group,
+    Cell,
+    Drawer
+  } from 'vux'
+  import AppConstant from '../global/constants/AppConstant'
+
+  export default {
+    data () {
+      return {
+        showMenu: false,
+        showMode: 'push',
+        showModeValue: 'push',
+        showPlacement: 'left',
+        showPlacementValue: 'left',
+        ringhtOptionShowMore: false,
+        direction: this.$store.state.direction,
+//        imgUserHeader: this.$store.state.accountModule.userInfo.displayPhotoUrl === undefined ? this.$store.state.accountModule.userInfo.displayPhotoUrl : require('../../design/images/default-user-img.jpg'),
+        userInfo: this.$store.state.accountModule.userInfo
+      }
+    },
+    computed: {
+      imgUserHeader () {
+        let user = this.$store.getters.userInfo
+        if (user !== undefined && user !== null) {
+          if (user.displayPhotoUrl !== undefined && user.displayPhotoUrl.trim() !== '') {
+            return user.displayPhotoUrl
+          }
+        }
+        return require('../../design/images/default-user-img.jpg')
+      }
+    },
+    components: {
+      Group,
+      Cell,
+      Drawer
+    },
+    methods: {
+      /**
+       * 侧滑隐藏事件
+       */
+      drawerVisibilityEvent () {
+        this.$store.commit(storeTypes.GLOBAL_SET_DRAWER, false)
+      },
+      /**
+       * 菜单点击跳转事件
+       * @param path
+       */
+      gotoPage (path) {
+        this.drawerVisibilityEvent()
+        this.$router.push(path)
+      },
+      /**
+       * 登录事件
+       */
+      loginEvent () {
+        this.push('/login')
+      },
+      /**
+       * 退出事件
+       */
+      exitAppEvent () {
+        this.$store.dispatch(storeTypes.ACCIYBT_EXIT, '').then(data => {
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.removeCookie(AppConstant.cookie.beforeLoginUrl)
+            this.drawerVisibilityEvent()
+            this.replace(this.pages.Login)
+          }
+        }).catch(e => {
+          console.log(e)
+        })
+      },
+      itemStyle (path) {
+        if (this.$route.path === path) {
+          return ['menu-items', 'current']
+        } else {
+          return ['menu-items']
+        }
+      },
+      openApp () {
+        // 此方法后续需要放到util模块中
+//        AppUtil.openApp()
+        this.toast('程序猿挖矿中...')
+      }
+    }
+  }
+</script>
+

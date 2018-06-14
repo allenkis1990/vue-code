@@ -1,0 +1,725 @@
+<template>
+  <div class="contain">
+    <div class="hb-header-box">
+      <!--<div class="header-left"><a class="hb-ico ico-menu"></a></div>-->
+      <div class="header-tit">购物车</div>
+      <!--<div class="header-right"><a class="header-txt">登录/注册</a></div>-->
+    </div>
+
+
+    <div v-if="shoppingCartList.length<=0">
+      <div class="no-data-box pt100">
+        <img class="no-data-img" src="../../../design/images/no-data-img.png" alt=" " />
+        <div class="no-data-txt">购物车空空如也<br/>赶紧去报名培训吧！</div>
+      </div>
+      <div class="btn-primary btn-m mt30" @click="goHome">报名培训</div>
+    </div>
+
+    <scroller
+      v-if="shoppingCartList.length>0"
+      style="box-sizing: border-box;"
+      :height="scrollerHeight"
+      lock-x
+      scrollbar-y
+      use-pulldown
+      use-pullup
+      @on-pullup-loading="loadMoreFn"
+      @on-pulldown-loading="refreshData"
+      v-model="scroller" ref="scroller">
+
+      <div class="hb-box-bd hb-box-bd-1">
+        <!--班级列表-->
+        <div class="hb-wrap-box hb-wrap-box-4 lwh-popup-picker">
+          <div class="hb-panel">
+            <div class="hb-panel-bd pb30">
+              <div class="hb-media-box"
+                   @click="goClassDetail(item)"
+                   :class="{'failure-items':item.disable}"
+                   v-for="(item,index) in shoppingCartList">
+                <div class="hb-form mr20"
+                     v-if="!item.disable"
+                     @click="selecteItemAction(item)">
+                  <img class="img"
+                       v-if="!item.isSelected"
+                       src="../../../design/images/radio.png" alt=" " />
+                  <img class="img"
+                       v-if="item.isSelected"
+                       src="../../../design/images/radio-checked.png" alt=" " />
+                </div>
+                <div class="failure-label" v-if="item.disable">失效</div>
+                <div class="hb-media-box-hd">
+                  <img class="hb-media-box-thumb" :src="iamgeUrl(item)" />
+                </div>
+                <div class="hb-media-box-bd">
+                  <div class="hb-media-box-title">{{item.skuName}}</div>
+                  <div class="hb-media-box-desc">科目：{{getSkuValueName(item.skuPropertyNameList,'科目')}}
+                    <span class="ml30" v-if="!isShowYearPicker(item)">年度：{{getSkuValueName(item.skuPropertyNameList,'年度')}}年</span>
+<!--
+                    <span class="ml30 year-select" v-if="isShowYearPicker(item)">年度：{{getSkuValueName(item.skuPropertyNameList,'年度')}}年</span>
+-->
+                    <popup-picker :data="item.optionYearViewList"
+                                  popup-title="请选择专业课认定的继续教育年度"
+                                  :show-name="true"
+                                  value-text-align="left"
+                                  v-if="isShowYearPicker(item)"
+                                  v-model="item.optionYearModelList"
+                                  @on-hide="pickHide"
+                                  @on-change="change(item)">
+
+                      <template slot="title" slot-scope="props">
+                        <span>年度：</span>
+                      </template>
+
+                    </popup-picker>
+                    <!--<div v-if="isShowYearPicker(item)">{{item.optionYearModelList}}</div>-->
+                  </div>
+                  <div class="hb-media-box-desc">学习形式：{{getStudyType(item)}}</div>
+                  <div class="hb-media-box-desc">学时：{{item.trainingPeriod}}</div>
+                </div>
+                <div class="price">￥<span class="num">{{item.originalPrice}}</span></div>
+              </div>
+              <div class="btn-default btn-s mt30"
+                   @click="clearLoseEfficacyItemsAction"
+                   v-if="hasLoseEfficacyItem">清空失效培训内容</div>
+            </div>
+
+            <div class="loading-tips" v-if="shoppingCartList.length&&shoppingCartTotalSize===0"><span class="line"></span><span class="txt">已经到最底部啦</span><span class="line"></span>
+            </div>
+            <div class="loading-tips" v-if="shoppingCartTotalSize>0 && scroller.pullupStatus === 'default'"><span class="line"></span><span class="txt">上拉加载更多</span><span class="line"></span>
+            </div>
+          </div>
+        </div>
+        <!--/班级列表-->
+      </div>
+
+      <div slot="pulldown" class="xs-plugin-pulldown-container xs-plugin-pulldown-down"
+           style="position: absolute; width: 100%; height: 40px; line-height: 40px; top: -10px; text-align: center;">
+        <span v-show="scroller.pulldownStatus === 'default'"></span>
+        <span class="pulldown-arrow" v-show="scroller.pulldownStatus === 'down' || scroller.pulldownStatus==='up'"
+              :class="{'rotate': scroller.pulldownStatus === 'up'}"
+              style="font-size: 16px;font-weight: bold;">↓</span>
+        <div v-show="scroller.pulldownStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+              刷新中...
+              </span>
+          </p>
+        </div>
+      </div>
+
+      <!--<div slot="pullup" style="position: absolute; width: 100%; height: 40px; line-height: 40px; bottom: 20px; text-align: center;color:#999;font-size:.26rem">
+        <div v-show="scroller.pullupStatus === 'loading'">
+          加载更多...
+        </div>
+      </div>-->
+      <div slot="pullup" class="xs-plugin-pullup-container xs-plugin-pullup-up"
+           style="position: absolute; width: 100%; height: 40px; bottom: 10px; text-align: center;">
+        <span class="pullup-arrow"
+              v-show="(scroller.pullupStatus === 'up'||scroller.pullupStatus === 'down') && !noMore"
+              :class="{'rotate':scroller.pullupStatus === 'down'}"
+              style="font-size: 16px;font-weight: bold;">↑</span>
+        <div v-show="scroller.pullupStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+      加载中...
+      </span>
+          </p>
+        </div>
+      </div>
+    </scroller>
+
+
+    <div class="hb-tabbar" v-if="shoppingCartList.length>0">
+      <div class="left-box flex">
+        <div class="hb-form mr20" @click="selectAllAction">
+          <img class="img"
+               v-if="!isSelectedAll"
+               src="../../../design/images/radio.png" alt=" " />
+          <img class="img"
+               v-if="isSelectedAll"
+               src="../../../design/images/radio-checked.png" alt=" " />
+        </div>
+        <span class="fs28" @click="selectAllAction">全选</span>
+        <span class="fs28 ml30" @click="deleteShoppingItemsAction">删除</span>
+      </div>
+      <div class="fs28 c6 mr20">合计：<span class="ci">¥{{totalPriceString}}</span></div>
+      <div class="hb-btn">{{showSettlementText}}</div>
+      <!--不可操作-->
+      <!--<div class="hb-btn disabled">结算</div>-->
+    </div>
+
+    <!--返回顶部-->
+    <div class="layer-box" @click="goTopEvent" v-if="shoppingCartList.length>0">
+      <div class="a-items"><img
+        src="../../../design/images/icon-top.png"
+        alt=" " class="img"></div>
+    </div>
+    <!--/返回顶部-->
+  </div>
+
+
+</template>
+
+<style lang="less">
+  @import "../../../design/styles/webstyle.less";
+  .lwh-popup-picker .hb-panel .weui-cell{padding:0}
+</style>
+
+<script>
+  import { Scroller, InlineLoading, PopupPicker } from 'vux'
+  import * as storeTypes from '../../store/types'
+  import utils from '@/common/util/Utils'
+  import constant from '@/global/constants/AppConstant'
+  export default {
+    components: {
+      Scroller,
+      InlineLoading,
+      PopupPicker
+    },
+    data () {
+      return {
+        scrollerHeight: '',
+        scroller: {
+          pullupStatus: 'default',
+          pulldownStatus: 'default'
+        },
+        pager: {
+          pageNo: 1,
+          pageSize: 10
+        },
+//      0加载 1下拉加载 2加载更多
+        scorllerStatus: 0,
+        noMore: false,
+        orderNo: '',
+        shoppingCartList: [],
+        selectedItemsArray: [],
+        shoppingCartTotalSize: 0,
+        totalPriceString: '0.00',
+        totalPrice: 0,
+        showSettlementText: '结算( 0 )',
+        isSelectedAll: false,
+        hasLoseEfficacyItem: false
+      }
+    },
+    computed: {
+    },
+    mounted () {
+      console.log('shoppingCart!!!!!!!!!!')
+      this.scrollerHeight = (window.outerHeight || window.innerHeight) + 'px';
+      this.getShoppingCartList()
+    },
+    methods: {
+      goClassDetail (item) {
+        if (item.disable) {
+          return false
+        }
+        let trainingItem = {
+          skuId: item.skuId,
+          schemeId: item.schemeId
+        }
+        if (item.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+          trainingItem.courseId = item.courseId
+          trainingItem.coursePackageId = item.coursePackageId
+        }
+        this.$router.push({
+          path: '/classDetail',
+          query: {
+            categoryType: item.categoryType,
+            trainingItem: trainingItem
+          }
+        })
+      },
+      goHome: function () {
+        this.$router.push({
+          path: '/demo/home'
+        })
+      },
+      /**
+       * 清空失效培训内容操作
+       */
+      clearLoseEfficacyItemsAction() {
+//        shoppingCartClearLoseEfficacy
+        let params = {}
+
+        var type = 'post'
+        var url = constant.apiUrl.shoppingCartModule.shoppingCartClearLoseEfficacy
+        utils.getAjaxData(type, params, url).then(res => {
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            for (let index = 0; index < this.shoppingCartList.length; index++) {
+              let itemObject = this.shoppingCartList[index]
+              if (itemObject.disable) {
+                console.log(1)
+                arrayRemove(this.shoppingCartList,itemObject)
+//                context.shoppingCartList.remove(itemObject)
+              }
+            }
+            this.hasLoseEfficacyItem = false
+          }
+        }).catch(e => {
+          console.log(e)
+          return this.toast('请求失败')
+        })
+      },
+//      pick确定的时候触发
+      pickHide: function (type) {
+        console.log(type)
+      },
+//      选定年度后发送保存购物车年度请求
+      change: function (item) {
+        console.log(item.optionYearModelList)
+        var yearOptionId = item.optionYearModelList[0]
+        if (!yearOptionId) {
+          item.yearOptionId = ''
+          return this.toast('请选择年度')
+        } else {
+          let params = {}
+          let classInfo = {
+            courseId: item.courseId,
+            yearOptionId: yearOptionId,
+            coursePackageId: item.coursePackageId,
+            skuId: item.skuId,
+            schemeId: item.schemeId,
+            dealPrice: item.dealPrice,
+            trainingPeriod: item.trainingPeriod
+          }
+          params.classInfo = classInfo
+          var type = 'post'
+          var url = constant.apiUrl.shoppingCartModule.shoppingChangeYear
+          utils.getAjaxData(type, params, url).then(res => {
+            if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+              return this.toast(res.head.message)
+            } else {
+//              保存年度成功后把选中的赋值给item的yearOptionId
+              item.yearOptionId = yearOptionId
+              console.log(this.shoppingCartList,'更新购物车年度完成后')
+            }
+          }).catch(e => {
+            console.log(e)
+            return this.toast('请求失败')
+          })
+        }
+      },
+      /**
+       * 删除选中的商品
+       */
+      deleteShoppingItemsAction() {
+        var that = this
+        let haveSlected = false
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let item = this.shoppingCartList[index]
+          if (item.isSelected) {
+            haveSlected = true
+            break
+          }
+        }
+        if (haveSlected) {
+          this.$vux.confirm.show({
+            title: '系统提示',
+            content: '确认删除选中的培训内容？',
+            onCancel: function () {
+              console.log('取消删除')
+            },
+            onConfirm: function () {
+              that.reallyDeleteShoppingItemsAction()
+              console.log('确认删除')
+            }
+          })
+        } else {
+          return this.toast('请选择需删除的培训内容')
+        }
+      },
+//      确定删除商品
+      reallyDeleteShoppingItemsAction() {
+        let context = this
+        let selectedValueArray = []
+        let selectedShoopingItemsArray = []
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let shoppingItem = this.shoppingCartList[index]
+          if (shoppingItem.isSelected) {
+            selectedShoopingItemsArray.push(shoppingItem)
+            let objectValue = {
+              courseId: '',
+              yearOptionsId: '',
+              coursePackageId: '',
+              skuId: shoppingItem.skuId,
+              schemeId: shoppingItem.schemeId,
+              dealPrice: shoppingItem.dealPrice,
+              trainingPeriod: shoppingItem.trainingPeriod
+            }
+            if (shoppingItem.courseId !== undefined && shoppingItem.courseId.length) {
+              objectValue.courseId = shoppingItem.courseId
+            }
+            if (shoppingItem.coursePackageId !== undefined && shoppingItem.coursePackageId.length) {
+              objectValue.coursePackageId = shoppingItem.coursePackageId
+            }
+            if (shoppingItem.yearOptionsId !== undefined && shoppingItem.yearOptionsId.length) {
+              objectValue.yearOptionsId = shoppingItem.yearOptionsId
+            }
+            selectedValueArray.push(objectValue)
+          }
+        }
+        let params = {
+          classInfo: selectedValueArray
+        }
+        var type = 'post'
+        var url = constant.apiUrl.shoppingCartModule.shoppingDelete
+        utils.getAjaxData(type, params, url).then(res => {
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            for (let index = context.shoppingCartList.length - 1; index >= 0; index--) {
+              let itemObject = context.shoppingCartList[index]
+              for (let subIndex = 0; subIndex < selectedShoopingItemsArray.length; subIndex++) {
+                let subItem = selectedShoopingItemsArray[subIndex]
+
+                if (subItem.categoryType === 'TRAINING_CLASS_GOODS') {
+                  if (subItem.skuId === itemObject.skuId && !subItem.disable) {
+//                    context.shoppingCartList.remove(itemObject)
+                    arrayRemove(context.shoppingCartList,itemObject);
+                  }
+                } else if (subItem.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+                  if (subItem.courseId === itemObject.courseId && !subItem.disable) {
+                    arrayRemove(context.shoppingCartList,itemObject);
+//                    context.data.shoppingItemsArray.remove(itemObject)
+                  }
+                }
+              }
+            }
+            context.checkIsSelectedAll()
+            context.calculateTotalPrice()
+          }
+        }).catch(e => {
+          console.log(e)
+          return this.toast('请求失败')
+        })
+      },
+      /**
+       * 选中所有物品事件
+       */
+      selectAllAction() {
+        if (this.isSelectedAll) {
+          this.selectedItemsArray = []
+          // 设置item选中属性为false
+          this.resetShoppingItems(false)
+        } else {
+          // 添加所有商品到列表
+
+          // 设置item选中属性为true
+          this.resetShoppingItems(true)
+        }
+        this.isSelectedAll = !this.isSelectedAll
+        // 计算总价
+        this.calculateTotalPrice()
+      },
+      /**
+       * 是否选中购物车商品的事件
+       */
+      selecteItemAction (item) {
+        console.log(1)
+        let shoppingItem = item
+        shoppingItem.isSelected = !shoppingItem.isSelected
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          if (itemObject.categoryType === 'TRAINING_CLASS_GOODS') {
+            if (itemObject.skuId === shoppingItem.skuId && !itemObject.disable) {
+              itemObject.isSelected = shoppingItem.isSelected
+            }
+          } else if (itemObject.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+            if (itemObject.courseId === shoppingItem.courseId && !itemObject.disable) {
+              itemObject.isSelected = shoppingItem.isSelected
+            }
+          }
+        }
+//        this.setData({
+//          shoppingItemsArray: this.data.shoppingItemsArray
+//        })
+        this.calculateTotalPrice()
+        this.checkIsSelectedAll()
+      },
+      /**
+       * 计算总价格方法
+       */
+      calculateTotalPrice () {
+        let totalPrice = 0
+        let totalCount = 0
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          if (itemObject.isSelected) {
+            totalPrice += itemObject.originalPrice
+            totalCount++
+          }
+        }
+        let SettlementTextString = '结算( ' + totalCount + ' )'
+        this.totalPriceString = toDecimal2(totalPrice)
+        this.totalPrice = totalPrice
+        this.showSettlementText = SettlementTextString
+//        this.setData({
+//          totalPrice: totalPrice,
+//          totalPriceString: this.data.totalPriceString,
+//          showSettlementText: SettlementTextString
+//        })
+      },
+      /**
+       * 全选和非全选数据变化
+       */
+      resetShoppingItems(isSelected) {
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          if (!itemObject.disable) {
+            itemObject.isSelected = isSelected
+          }
+        }
+//        this.setData({
+//          shoppingItemsArray: this.data.shoppingItemsArray
+//        })
+      },
+      /**
+       * 判断是否选了个数之后为全选，使UI全选同步
+       */
+      checkIsSelectedAll() {
+        let canPurchaseNum = 0;
+        let selectedNum = 0;
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let item = this.shoppingCartList[index]
+          if (!item.disable) {
+            canPurchaseNum++;
+            if (item.isSelected) {
+              selectedNum++
+            }
+          }
+        }
+        if (canPurchaseNum === selectedNum) {
+          this.isSelectedAll = true
+        } else {
+          this.isSelectedAll = false
+        }
+      },
+      /**
+       * 初始重置数据
+       */
+      resetInitializeData() {
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          if (!itemObject.disable) {
+            this.$set(itemObject,'isSelected',false);
+//            itemObject.isSelected = false
+          } else {
+            this.hasLoseEfficacyItem = true
+          }
+          if (itemObject.optionYearList !== undefined && itemObject.optionYearList.length) {
+            itemObject.currentYearIndex = 0
+            itemObject.yearOptionValue = itemObject.optionYearList[0].skuPropertyValueName
+            for (let yearIndex = 0; yearIndex < itemObject.optionYearList.length; yearIndex++) {
+              let yearObject = itemObject.optionYearList[yearIndex]
+              if (itemObject.yearOptionId === yearObject.skuPropertyValueId) {
+                itemObject.currentYearIndex = yearIndex
+                itemObject.yearOptionValue = yearObject.skuPropertyValueName
+              }
+            }
+          }
+        }
+        this.checkIsSelectedAll()
+        this.calculateTotalPrice()
+      },
+      /**
+       * 滚动顶部  点击事件
+       */
+      goTopEvent () {
+        this.$refs.scroller.reset({top: 0})
+      },
+      loadingUIState () {
+        if (this.scorllerStatus === 1) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePulldown()
+            this.scroller.pulldownStatus = 'default'
+            this.scorllerStatus = 0
+            return
+          }
+        }
+        if (this.scorllerStatus === 2) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePullup()
+            this.scroller.pullupStatus = 'default'
+            return
+          }
+        }
+        this.$vux.loading.hide()
+      },
+      initPager: function () {
+        this.pager = {
+          pageNo: 1,
+          pageSize: 10
+        }
+      },
+      getSkuValueName: function (skuArr,skuName) {
+        if (!skuArr) {
+          return ''
+        }
+        var str = ''
+        skuArr.forEach(function (item) {
+          if (item.skuPropertyName === skuName) {
+            str = item.skuPropertyValueName
+          }
+        })
+        return str
+      },
+      getStudyType: function (item) {
+        var typeName = ''
+        if (item.categoryType === 'TRAINING_CLASS_GOODS') {
+          typeName = '培训班学习'
+        }
+        if (item.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+          typeName = '课程学习'
+        }
+        return typeName
+      },
+      /**
+       * 自主选课的专业课要用户选择年度
+       */
+      isShowYearPicker: function (item) {
+        if (item === undefined) {
+          return false
+        }
+        if (item.categoryType !== undefined && item.categoryType === 'COURSE_SUPERMARKET_GOODS' && getSkuCodeValueWithKeyFromSkuArray('trainingSubject', item.skuPropertyNameList) === 'profession') {
+          return true
+        }
+        return false
+      },
+      iamgeUrl (item) {
+        if (item.photoPath === undefined) {
+          return require('../../../design/images/course-img.jpg')
+        }
+        return item.photoPath
+      },
+      /**
+       * 如果是自主选课 -专业课对选择年度列表做得操作
+       * 1如果之前选过年度那直接回填
+       * 2给年度列表首项加一个请选择年度选项
+       * 3设置一个控件认的数据结构[[{name:'',value:''}]]
+       */
+      itemYearOptionsDo: function () {
+        var that = this
+        this.shoppingCartList.forEach(function (item) {
+          if (item.optionYearList.length) {
+            if (item.yearOptionId) {
+              that.$set(item, 'optionYearModelList', [item.yearOptionId])
+            } else {
+              that.$set(item,'optionYearModelList',[''])
+            }
+            item.optionYearList.forEach(function (subItem) {
+              that.$set(subItem,'name',subItem.skuPropertyValueName)
+              that.$set(subItem,'value',subItem.skuPropertyValueId)
+            })
+            item.optionYearList.unshift({name: '请选择年度', value: ''})
+            that.$set(item, 'optionYearList', item.optionYearList)
+            that.$set(item,'optionYearViewList',[item.optionYearList])
+          }
+          console.log(item.optionYearViewList,'8888')
+        })
+      },
+      getShoppingCartList: function () {
+        var that = this
+        var type = 'get'
+        var url = constant.apiUrl.shoppingCartModule.getShoppingartList
+        var params = {
+          pageNo: that.pager.pageNo,
+          pageSize: that.pager.pageSize
+        }
+        if (this.scorllerStatus === 0) {
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+        }
+        utils.getAjaxData(type, params, url).then(res => {
+          this.loadingUIState();
+          if (this.$refs.scroller !== undefined && this.scorllerStatus !== 2) this.$refs.scroller.reset({top: 0})
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            console.log(res.data, '购物车列表')
+            this.shoppingCartTotalSize = res.data.shoppingItems.length
+//            2是加载更多
+            if (this.scorllerStatus === 2) {
+              this.shoppingCartList = this.shoppingCartList.concat(res.data.shoppingItems)
+              this.resetInitializeData()
+              this.itemYearOptionsDo()
+              this.scorllerStatus = 0
+            } else {
+              this.shoppingCartList = res.data.shoppingItems
+              this.resetInitializeData()
+              this.itemYearOptionsDo()
+              this.initPager()
+            }
+          }
+        }).catch(e => {
+          this.loadingUIState();
+          console.log(e)
+        })
+      },
+      /**
+       * 下拉刷新
+       */
+      refreshData () {
+        console.log(this.scroller)
+        console.log('下拉刷新！！！')
+        this.scorllerStatus = 1
+        this.initPager()
+        this.getShoppingCartList()
+      },
+      loadMoreFn: function () {
+        console.log('我已经到底部')
+        this.scorllerStatus = 2
+        this.pager.pageNo++;
+        this.loadingUIState()
+        if (this.shoppingCartList.length && this.shoppingCartTotalSize === 0) {
+          console.log('没有更多了')
+          return false
+        }
+        this.getShoppingCartList()
+      }
+    }
+  }
+
+  function toDecimal2 (x) {
+    var f;
+    f = parseFloat(x)
+    if (isNaN(f)) {
+      return false
+    }
+    f = Math.round(x * 100) / 100
+    var s = f.toString()
+    var rs = s.indexOf('.')
+    if (rs < 0) {
+      rs = s.length
+      s += '.'
+    }
+    while (s.length <= rs + 2) {
+      s += '0'
+    }
+    return s
+  }
+
+  function getSkuCodeValueWithKeyFromSkuArray (skuKey, skuPropertyArray) {
+    if (skuPropertyArray === undefined || skuPropertyArray.length === 0) {
+      return ''
+    }
+    var propertyVlueCode = ''
+    for (var i = 0; i < skuPropertyArray.length; i++) {
+      var skuPropertyObject = skuPropertyArray[i]
+      if (skuPropertyObject.skuPropertyCode === skuKey) {
+        propertyVlueCode = skuPropertyObject.skuPropertyValueCode
+      }
+    }
+    return propertyVlueCode
+  }
+  function arrayRemove (arr, val) {
+    var index = arr.indexOf(val)
+    if (index > -1) {
+      arr.splice(index, 1)
+    }
+  }
+</script>

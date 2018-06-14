@@ -1,0 +1,111 @@
+<template>
+  <div class="container">
+    <scroller lock-x>
+      <div class="weui-cells__title">原订单</div>
+      <div class="weui-panel hb-panel-1">
+        <div class="weui-panel__hd">
+          <p>{{trainingChangeLog.originalOrder.createTime}}</p>
+          <p class="tr">订单号：{{trainingChangeLog.originalOrder.orderNo}}</p>
+        </div>
+        <div class="weui-panel__bd">
+          <div class="weui-media-box weui-media-box_appmsg"  v-for="(item,index) in trainingChangeLog.originalOrder.subOrderList" :key="index">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="item.photoPath">
+            </div>
+            <div class="weui-media-box__bd">
+              <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+              <p class="weui-media-box__desc">年度：{{getTrainingYear(item)}}年</p>
+              <p class="weui-media-box__desc">科目：{{getTrainingType(item)}}</p>
+              <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+            </div>
+            <!-- <div class="price">¥ {{item.totalAmount === undefined?'':item.totalAmount}}</div> -->
+          </div>
+        </div>
+        <div class="weui-panel__ft">
+          <p class="tr">实付<span class="ml10 cr num">¥ {{trainingChangeLog.originalOrder.paidMoney}}</span> </p>
+        </div>
+      </div>
+      <div class="weui-cells__title">换班订单</div>
+      <div class="weui-panel hb-panel-1">
+        <div class="weui-panel__hd">
+          <p>{{trainingChangeLog.changedOrder.createTime}}</p>
+          <p class="tr">订单号：{{trainingChangeLog.changedOrder.orderNo}}</p>
+        </div>
+        <div class="weui-panel__bd">
+          <div class="weui-media-box weui-media-box_appmsg" v-for="(item,index) in trainingChangeLog.changedOrder.subOrderList" :key="index">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="item.photoPath">
+            </div>
+            <div class="weui-media-box__bd" >
+              <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+              <p class="weui-media-box__desc">年度：{{getTrainingYear(item)}}年</p>
+              <p class="weui-media-box__desc">科目：{{getTrainingType(item)}}</p>
+              <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+            </div>
+            <!-- <div class="price">¥ {{item.totalAmount === undefined?'':item.totalAmount}}</div> -->
+          </div>
+        </div>
+        <div class="weui-panel__ft">
+          <p class="tr">实付<span class="ml10 cr num">¥ {{trainingChangeLog.changedOrder.paidMoney}}</span> </p>
+        </div>
+      </div>
+    </scroller>
+  </div>
+</template>
+<script>
+import * as storeTypes from '../../store/types'
+import { Scroller } from 'vux'
+export default {
+  components: { Scroller },
+  data () {
+    return {
+      subOrderNo: this.$route.query.orderNo
+    }
+  },
+  computed: {
+    trainingChangeLog: function () {
+      return this.$store.state.orderModule.orderChangeLog
+    }
+  },
+  methods: {
+    getTrainingYear (item) {
+      for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+        if (item.skuPropertyNameList[i].skuPropertyName === '继续教育年度') {
+          return item.skuPropertyNameList[i].skuPropertyValueName
+        }
+      }
+    },
+    getMajor (item) {
+      for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+        if (item.skuPropertyNameList[i].skuPropertyName === '专业') {
+          return item.skuPropertyNameList[i].skuPropertyValueName
+        }
+      }
+    },
+    getTrainingType (item) {
+      for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+        if (item.skuPropertyNameList[i].skuPropertyName === '科目') {
+          return item.skuPropertyNameList[i].skuPropertyValueName
+        }
+      }
+    },
+    requestOrderChangeLog: function () {
+      this.showLoading('加载中...')
+      let that = this
+      this.$store.dispatch(storeTypes.ORDER_GET_CHANGE_LOG, {subOrderNo: this.subOrderNo}).then(data => {
+        that.hideLoading()
+        if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+          this.toast(data.head.message)
+        }
+      }).then(e => {
+        that.hideLoading()
+        console.log(JSON.stringify(e))
+      })
+    }
+  },
+  mounted () {
+    this.requestOrderChangeLog()
+  }
+}
+
+</script>

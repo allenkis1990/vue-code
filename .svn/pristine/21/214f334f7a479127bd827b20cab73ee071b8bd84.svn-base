@@ -1,0 +1,41 @@
+<template>
+  <tabbar class="normalAnimated fadeInUp">
+    <tabbar-item link="/" :selected="tabIndex==1">
+      <img slot="icon" src="../../design/images/tab-home.png">
+      <img slot="icon-active" src="../../design/images/tab-home-current.png">
+      <span slot="label">首页</span>
+    </tabbar-item>
+    <tabbar-item link="/category" :selected="tabIndex==2">
+      <img slot="icon" src="../../design/images/tab-classify.png">
+      <img slot="icon-active" src="../../design/images/tab-classify-current.png">
+      <span slot="label">分类</span>
+    </tabbar-item>
+    <tabbar-item link="/myCourse" :selected="tabIndex==3">
+      <img slot="icon" src="../../design/images/tab-course.png">
+      <img slot="icon-active" src="../../design/images/tab-course-current.png">
+      <span slot="label">我的课程</span>
+    </tabbar-item>
+    <tabbar-item link="/center" :selected="tabIndex==4">
+      <img slot="icon" src="../../design/images/tab-mine.png">
+      <img slot="icon-active" src="../../design/images/tab-mine-current.png">
+      <span slot="label">我的</span>
+    </tabbar-item>
+  </tabbar>
+</template>
+
+<script>
+  import {Tabbar, TabbarItem, Group, Cell} from 'vux'
+  export default {
+    components: {
+      Tabbar,
+      TabbarItem,
+      Group,
+      Cell
+    },
+    computed: {
+      tabIndex () {
+        return this.$store.state.tabIndex
+      }
+    }
+  }
+</script>

@@ -1,0 +1,638 @@
+<template>
+  <div class="container weui-tab">
+    <div class="weui-tab__panel">
+      <div class="container" v-if="payNoMoneyTrainingClass">
+        <div class="js_dialog" id="iosDialog1" style="opacity: 1;">
+          <div class="weui-mask"></div>
+          <div class="weui-dialog weui-dialog-1">
+            <!-- <div class="dialog-pic"><img src="../../../design/images/distribution-img.png" alt=""></div> -->
+            <div class="weui-dialog__bd">
+              <span>该订单为0元订单,无需支付!</span>
+            </div>
+            <div class="weui-dialog__ft">
+              <div @click="gotoOrderDetail()" class="weui-dialog__btn weui-dialog__btn_primary">查看订单详情</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel">
+        <div class="weui-panel__hd">报名班级</div>
+        <div class="weui-panel__bd">
+          <!-- @click="goToTrainingDetail()" -->
+          <div class="weui-media-box weui-media-box_appmsg">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="trainingClassDetailInfo.photoPath">
+            </div>
+            <div class="weui-media-box__bd">
+              <h4 class="weui-media-box__title">{{trainingClassDetailInfo.trainingClassName}}</h4>
+              <p class="weui-media-box__desc">年度：{{getTrainingYear(trainingClassDetailInfo)}}年</p>
+              <p class="weui-media-box__desc">科目：{{getTrainingType(trainingClassDetailInfo)}}</p>
+              <p class="weui-media-box__desc">学时：{{trainingClassDetailInfo.trainingPeriod}}</p>
+            </div>
+            <div class="price">￥
+              <span class="num">{{trainingClassDetailInfo.totalAmount}}元</span>
+            </div>
+            <!--<div class="price" v-if="trainingClassDetailInfo.haveDiscount">
+              <div class="now-price">
+                <span class="activity-label">优惠中</span>￥
+                <span class="num">{{trainingClassDetailInfo.dealPrice}}</span>
+                <span class="old-price">￥{{trainingClassDetailInfo.originalPrice}}</span>
+              </div>
+            </div>-->
+          </div>
+<!--
+          <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg" v-if="isElectron == false">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" src="../../../../design/images/invoice-img.jpg">
+            </div>
+            <div class="weui-media-box__bd">
+              <h4 class="weui-media-box__title">纸质发票配送费</h4>
+              <p class="weui-media-box__desc">发票类型：纸质普票</p>
+            </div>
+            <div class="price">￥
+              <span class="num">{{this.invoicePrice}}元</span>
+            </div>
+          </a>
+-->
+        </div>
+      </div>
+      <!-- 只支持发票 和  只支持发票和证书配送-->
+      <div class="weui-panel hb-panel" v-if="(configSetting !== undefined && configSetting.type == 1 && configSetting.provideType != 0 && trainingClassDetailInfo.totalAmount != 0)|| (configSetting !== undefined && configSetting.type == 3 && configSetting.provideType != 0 && trainingClassDetailInfo.totalAmount != 0)">
+        <div class="weui-panel__hd">发票</div>
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd">
+              <p>索要发票</p>
+            </div>
+            <!-- 0：无 1：学员自选是否需要发票 2：强制提供 -->
+            <div class="weui-cell__ft hb-form-box" v-if="configSetting.provideType == 0">
+              <a href="javascript:void(0);" class="hb-btn-s">开票</a>
+              <a href="javascript:void(0);" class="hb-btn-s">不开票</a>
+              <!--<div class="hb-form radio"></div>-->
+            </div>
+            <div class="weui-cell__ft hb-form-box" v-if="configSetting.provideType == 1">
+              <a href="javascript:void(0);"
+                 @click="needInvoiceAction(true)"
+                 :class="{'current':pageState.needInvoice}"
+                 class="hb-btn-s">开票</a>
+              <a href="javascript:void(0);"
+                 @click="needInvoiceAction(false)"
+                 :class="{'current':!pageState.needInvoice}"
+                 class="hb-btn-s">不开票</a>
+              <!--<div @click="needInvoiceAction()" :class="invoiceProvideType()"></div>-->
+            </div>
+            <div class="weui-cell__ft hb-form-box" v-if="configSetting.provideType == 2">
+              <a href="javascript:void(0);" class="hb-btn-s current">开票</a>
+              <!--<a href="javascript:void(0);" class="hb-btn-s">不开票</a>-->
+              <!--<div class="hb-form radio-checked"></div>-->
+            </div>
+          </div>
+          <!-- 0：无 1：学员自选是否需要发票 2：强制提供 -->
+          <div v-if="configSetting.provideType == 0">
+            <a class="weui-cell weui-cell_access" href="javascript:;">
+              <div class="weui-cell__bd">
+                <p class="to">
+                  <span class="tit">发票抬头</span>不提供发票</p>
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a>
+            <!-- <a class="weui-cell weui-cell_access" href="javascript:;">
+                <div class="weui-cell__bd">
+                  <p class="to"><span class="tit">发票配送</span>自取(厦门人才市场)</p>
+                </div>
+                <div class="weui-cell__ft"></div>
+              </a> -->
+          </div>
+          <!-- 0：无 1：学员自选是否需要发票 2：强制提供 -->
+          <div v-if="configSetting.provideType == 1 || configSetting.provideType == 2">
+            <a class="weui-cell weui-cell_access" href="javascript:;">
+              <div class="weui-cell__bd" @click="configInvoice()">
+                <p class="to">
+                  <span class="tit">发票抬头</span>{{pageState.invoiceType}}</p>
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a>
+            <a class="weui-cell weui-cell_access" href="javascript:;" v-if="pageState.needInvoiceDeliver">
+              <div class="weui-cell__bd" @click="configInvoiceDeliver()">
+                <p class="to">
+                  <span class="tit">发票配送</span>{{pageState.invoiceDeliver}}</p>
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- 支持发票和证书   -->
+
+      <!-- V1.0.0修复版本隐藏 -->
+      <!-- 只支持证书 -->
+      <!-- <div class="weui-panel hb-panel" v-if="configSetting.type == 2 || configSetting.type == 3">
+          <div class="weui-panel__hd">证书</div>
+          <div class="weui-cells">
+            <a class="weui-cell weui-cell_access" href="javascript:;">
+              <div class="weui-cell__bd" @click="configCerDeliver()">
+                <p class="to"><span class="tit">证书配送</span>{{pageState.cerDeliver}}</p>
+              </div>
+              <div class="weui-cell__ft"></div>
+            </a>
+          </div>
+        </div> -->
+      <div class="p10 tips-txt-box" v-if="trainingClassDetailInfo.totalAmount != 0">温馨提示：7天内且未开具发票且班级学习进度为零可申请退款（系统将在报班成功7天后为您开具发票）</div>
+    </div>
+    <!-- <div class="weui-tabbar hb-tabbar">
+        <div  class="hb-btn">提交配送信息</div>
+      </div> -->
+    <div class="weui-tabbar hb-tabbar">
+      <div class="left-box">待付金额：
+        <!--+ this.invoicePrice-->
+        <span class="price">￥{{isElectron === false ? (parseFloat(trainingClassDetailInfo.totalAmount) ) : (trainingClassDetailInfo.totalAmount)}}</span>
+      </div>
+      <div @click="createOrder()" class="hb-btn">确认订单</div>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+
+</style>
+
+<script>
+import { Group, Radio } from 'vux'
+import * as storeTypes from '../../../store/types'
+import AppConstant from '../../../global/constants/AppConstant'
+export default {
+  components: { Radio, Group },
+  data() {
+    return {
+      // orderArray: this.$store.state.orderModule.needCompleteOrderList,
+      // orderNo: '',
+      btnIsEnable: true,
+      skuId: this.$route.query.skuId,
+      trainingClassDetailInfo: {},
+      configSetting: {},
+      invoiceInfo: this.$store.state.orderModule.createInvoiceInfo,
+      cerInfo: this.$store.state.orderModule.createCerInfo,
+      payNoMoneyTrainingClass: false,
+      orderNo: '',
+      pageState: {
+        // 是否需要发票
+        needInvoice: this.$store.state.orderModule.createOrderNeedInvoice || true,
+        // 是否需要配送发票
+        needInvoiceDeliver: false,
+        // 发票抬头文案,以及选择后文字显示
+        invoiceType: '',
+        // 发票配送文案,以及选择后配送显示
+        invoiceDeliver: '',
+        // 证书配送文案,以及选后配送显示
+        cerDeliver: ''
+      },
+      invoicePrice: AppConstant.sysContext.invoicePrice
+    }
+  },
+  computed: {
+    isElectron() {
+      return this.$store.state.orderModule.createInvoiceInfo.electron
+    }
+  },
+  methods: {
+    gotoOrderDetail() {
+      this.push({ path: '/orderDetail', query: { orderNo: this.orderNo } })
+    },
+    goToTrainingDetail(obj) {
+      var yearObj = {
+        skuPropertyId: '',
+        skuPropertyName: '',
+        skuPropertyValueId: '',
+        skuPropertyValueName: ''
+      }
+      for (var i = 0; i < this.trainingClassDetailInfo.skuPropertyNameList.length; i++) {
+        if (this.trainingClassDetailInfo.skuPropertyNameList[i].skuPropertyName === '继续教育年度') {
+          yearObj = this.trainingClassDetailInfo.skuPropertyNameList[i]
+          break
+        }
+      }
+      this.$router.push({ path: '/classDetail', query: { yearObject: yearObj, amount: this.trainingClassDetailInfo.totalAmount, skuId: this.trainingClassDetailInfo.skuId } })
+    },
+    invoiceProvideType: function() {
+      if (this.pageState.needInvoice) {
+        return ['hb-form', 'radio-checked']
+      } else {
+        return ['hb-form', 'radio']
+      }
+    },
+    getTrainingYear(item) {
+      if (item.skuPropertyNameList) {
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '继续教育年度') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    getMajor(item) {
+      if (item.skuPropertyNameList) {
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '专业') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    getTrainingType(item) {
+      if (item.skuPropertyNameList) {
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '科目') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    configInvoice: function() {
+      if (this.configSetting.provideType === 1) {
+        if (!this.pageState.needInvoice) {
+          this.toast('请勾选索要发票选项!')
+          return
+        }
+      }
+      this.$store.commit(storeTypes.CREATE_ORDER_NEED_INVOICE, this.pageState.needInvoice);
+      this.push({
+        path: '/configInvoiceInfo',
+        query: {
+          invoiceType: this.configSetting.invoiceType,
+          invoiceTitle: this.configSetting.invoiceTitle,
+          provideType: this.configSetting.provideType,
+          price: this.trainingClassDetailInfo.totalAmount
+        }
+      })
+    },
+    configInvoiceDeliver: function() {
+      if (this.configSetting.provideType === 1) {
+        if (!this.pageState.needInvoice) {
+          this.toast('请勾选所要发票按钮!')
+          return
+        }
+      }
+      this.$store.commit(storeTypes.CREATE_ORDER_NEED_INVOICE, this.pageState.needInvoice);
+      this.push({ path: '/configInvoiceDeliver' })
+    },
+    configCerDeliver: function() {
+      this.push({ path: '/configCerDeliver' })
+    },
+    needInvoiceAction: function(bol) {
+      this.pageState.needInvoice = bol
+      if (this.pageState.needInvoice === false) {
+        this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+        this.invoiceInfo = this.$store.state.orderModule.createInvoiceInfo
+        this.pageState.invoiceType = '请选择发票抬头'
+        this.pageState.invoiceDeliver = '请选择配送方式'
+        this.pageState.needInvoiceDeliver = false
+      }
+    },
+    requestConfigSetting: function() {
+      this.showLoading('加载中...')
+      this.$store.dispatch(storeTypes.ORDER_GET_CREATE_CONFIG_SETTING, { skuId: this.skuId })
+        .then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.configSetting = data.data
+            this.initPageState()
+          } else {
+            console.log(JSON.stringify(data))
+          }
+        })
+        .then(e => {
+          this.hideLoading()
+        })
+    },
+    initPageState: function() {
+      if (this.configSetting.type === 1) {
+        // 初始化发票配送抬头
+        this.initInvoiceTitle()
+        // 初始化是和否需要发票
+        this.initNeedInvoice()
+        // 初始化发票配送信息
+        this.initInvoiceDeliver()
+      } if (this.configSetting.type === 2) {
+        // 初始化证书配送信息
+        this.initCerDeliver()
+      } if (this.configSetting.type === 3) {
+        // 初始化发票配送抬头
+        this.initInvoiceTitle()
+        // 初始化是和否需要发票
+        this.initNeedInvoice()
+        // 初始化发票配送信息
+        this.initInvoiceDeliver()
+        // 初始化证书配送信息
+        this.initCerDeliver()
+      }
+    },
+    // 初始化发票抬头内容
+    initInvoiceTitle: function() {
+      if (this.invoiceInfo.electron === true) {
+        this.pageState.invoiceType = '电子-'
+      } else if (this.invoiceInfo.electron === false) {
+        this.pageState.invoiceType = '纸质-'
+      }
+      if (this.invoiceInfo.titleType === 1) {
+        this.pageState.invoiceType = this.pageState.invoiceType + '个人'
+      } else if (this.invoiceInfo.titleType === 2) {
+        this.pageState.invoiceType = this.pageState.invoiceType + '单位(' + this.invoiceInfo.title + ')'
+      }
+      if (this.pageState.invoiceType.length === 0) {
+        this.pageState.invoiceType = '请选择发票抬头'
+      }
+    },
+    // 初始化索要发票按钮状态
+    initNeedInvoice: function() {
+      if (this.pageState.invoiceType !== '请选择发票抬头' && this.pageState.invoiceType.length !== 0) {
+        this.pageState.needInvoice = true
+      }
+    },
+    // 初始化发票配送内容
+    initInvoiceDeliver: function() {
+      if (this.invoiceInfo.electron === undefined || this.invoiceInfo.electron === true) {
+        this.pageState.needInvoiceDeliver = false
+      } else if (this.invoiceInfo.electron === false) {
+        this.pageState.needInvoiceDeliver = true
+        if (this.invoiceInfo.deliverType === 1) {
+          this.pageState.invoiceDeliver = '邮寄(' + this.invoiceInfo.addressDetails + ')'
+        } else if (this.invoiceInfo.deliverType === 2) {
+          this.pageState.invoiceDeliver = '自取(' + this.invoiceInfo.selfStorageName + ')'
+        } else {
+          this.pageState.invoiceDeliver = '请选择配送方式'
+        }
+      }
+    },
+    initCerDeliver: function() {
+      if (this.cerInfo.deliverType === 1) {
+        this.pageState.cerDeliver = '邮寄(' + this.cerInfo.addressDetails + ')'
+      } else if (this.cerInfo.deliverType === 2) {
+        this.pageState.cerDeliver = '自取(' + this.cerInfo.selfStorageName + ')'
+      } else {
+        this.pageState.cerDeliver = '请选择配送方式'
+      }
+    },
+    requestProduct: function() {
+      this.$store.dispatch(storeTypes.PRODUCT_GET_DETAIL_INFO, { skuId: this.skuId })
+        .then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.trainingClassDetailInfo = data.data
+            this.initPageState()
+          } else {
+            console.log(JSON.stringify(data))
+          }
+        })
+        .then(e => {
+          this.hideLoading()
+        })
+    },
+    createOrder: function() {
+      if (this.btnIsEnable === false) return
+      let that = this;
+      if (!this.pageState.needInvoice) {
+        this.$vux.confirm.show({
+          title: '提示',
+          content: '亲爱的学员，若您选择不要发票，则后续无法补要发票。',
+          onShow() {
+            console.log('plugin show')
+          },
+          onHide() {
+            console.log('plugin hide')
+          },
+          onCancel() {
+            console.log('cancel')
+          },
+          onConfirm() {
+            that.createOrderAction()
+          }
+        })
+      } else {
+        that.createOrderAction()
+      }
+    },
+    createOrderAction() {
+      this.btnIsEnable = false
+      var param = {}
+      param.paymentChannel = 'WECHAT'
+      param.orderSkuPlaceInfoList = [{ skuId: this.skuId, purchaseQuantity: 1 }]
+      param.deliverInfo = {}
+      var email = this.$store.state.orderModule.orderEmail;
+      // 是否0元订单
+      if (parseFloat(this.trainingClassDetailInfo.totalAmount) === 0) {
+        this.$store.dispatch(storeTypes.ORDER_CREATE_ORDER, param).then(data => {
+          this.hideLoading()
+          this.btnIsEnable = true
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+            this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_CER_INFO, {})
+            this.payNoMoneyTrainingClass = true
+            this.orderNo = data.data.orderNo
+          } else {
+            this.btnIsEnable = true
+            this.toast(data.head.message)
+          }
+        })
+          .then(e => {
+            this.btnIsEnable = true
+            this.hideLoading()
+          })
+      } else {
+        // 正常订单 赋值提交数据
+        param.deliverInfo = this.assignValue(email)
+        // 验证提交数据
+        if (this.configSetting.provideType === 1 && !this.pageState.needInvoice) {
+          param.deliverInfo = {};
+          this.submitOrder(param);
+          return;
+        }
+        if (this.checkValue(param.deliverInfo)) {
+          this.submitOrder(param);
+        } else {
+          this.btnIsEnable = true
+        }
+      }
+    },
+    submitOrder(param) {
+      this.$store.dispatch(storeTypes.ORDER_CREATE_ORDER, param).then(data => {
+        this.hideLoading()
+        this.btnIsEnable = true
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+          this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_CER_INFO, {})
+          this.push({ path: '/confirmPayOrder', query: { orderNo: data.data.orderNo } })
+        } else {
+          this.btnIsEnable = true
+          this.toast(data.head.message)
+        }
+      }).then(e => {
+        this.btnIsEnable = true
+        this.hideLoading()
+      })
+    },
+    assignValue: function(email) {
+      var deliverInfo = {}
+      deliverInfo.invoiceInfo = this.invoiceInfo
+      if (email) {
+        deliverInfo.invoiceInfo.email = email
+      }
+      deliverInfo.cerInfo = this.cerInfo
+      return deliverInfo
+    },
+    checkValue: function(param) {
+      // type             1.只支持发票 2.只支持证书 3.支持发票和证书配送
+      // provideType      0：无 1：学员自选是否需要发票 2：强制提供
+      switch (this.configSetting.type) {
+        // 只支持发票
+        case 1: {
+          // invoiceType
+          // 1.只支持纸质
+          if (this.configSetting.invoiceType === 1) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 检查发票配送信息
+            if (!this.checkInvoiceDeliverInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 2.只支持电子发票
+          } else if (this.configSetting.invoiceType === 2) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 3.支持纸质和电子发票
+          } else if (this.configSetting.invoiceType === 3) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 纸质发票时候检查配送信息
+            if (!param.invoiceInfo.electron) {
+              // 检查发票配送信息
+              if (!this.checkInvoiceDeliverInfo(param.invoiceInfo)) {
+                return
+              }
+            }
+          }
+          break
+        }
+        // 只支持证书
+        case 2: {
+          if (!this.checkCerInfo(param.cerInfo)) {
+            return false
+          }
+          break
+        }
+        // 支持发票和证书
+        case 3: {
+          // invoiceType
+          // 1.只支持纸质
+          if (this.configSetting.invoiceType === 1) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 检查发票配送信息
+            if (!this.checkInvoiceDeliverInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 2.只支持电子发票
+          } else if (this.configSetting.invoiceType === 2) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 3.支持纸质和电子发票
+          } else if (this.configSetting.invoiceType === 3) {
+            // 检查发票内容
+            if (!this.checkInvoiceInfo(param.invoiceInfo)) {
+              return false
+            }
+            // 纸质发票时候检查配送信息
+            if (!param.invoiceInfo.electron) {
+              // 检查发票配送信息
+              if (!this.checkInvoiceDeliverInfo(param.invoiceInfo)) {
+                return false
+              }
+            }
+            // 检查证书
+            // if (!this.checkCerInfo(param.cerInfo)) {
+            //   return false
+            // }
+          }
+          break
+        }
+        default:
+          break
+      }
+      return true
+    },
+    checkInvoiceInfo: function(invoiceInfo) {
+      if (!invoiceInfo.title) {
+        this.toast('请配置发票信息')
+        return false
+      }
+      if (invoiceInfo.title.length === 0) {
+        this.toast('请输入发票抬头')
+        return false
+      }
+      // invoiceTitle     1.只支持个人 2.只支持单位 3.支持个人和单位
+      // 2：企业
+      if (invoiceInfo.titleType === 2) {
+        if (invoiceInfo.taxpayerNo.length === 0) {
+          this.toast('请输入纳税人识别号')
+          return false
+        }
+      }
+      return true
+    },
+    checkInvoiceDeliverInfo: function(invoiceInfo) {
+      if (!invoiceInfo.deliverType) {
+        this.toast('请配置发票信息')
+        return false
+      }
+      // 1.邮寄 2.买家自取
+      if (invoiceInfo.deliverType === 1) {
+        if (invoiceInfo.receiverAddressId.length === 0) {
+          this.toast('请输入发票邮寄地址')
+          return false
+        }
+      }
+      if (invoiceInfo.deliverType === 2) {
+        if (invoiceInfo.selfStorageId.length === 0) {
+          this.toast('请选择发票自取地址')
+          return false
+        }
+      }
+      return true
+    },
+    checkCerInfo: function(cerInfo) {
+      if (!cerInfo.deliverType) {
+        this.toast('请配置证书信息')
+        return false
+      }
+      // 1.邮寄 2.买家自取
+      if (cerInfo.deliverType === 1) {
+        if (cerInfo.receiverAddressId.length === 0) {
+          this.toast('请输入证书邮寄地址')
+          return false
+        }
+      }
+      if (cerInfo.deliverType === 2) {
+        if (cerInfo.selfStorageId.length === 0) {
+          this.toast('请选择证书自取地址')
+          return false
+        }
+      }
+      return true
+    }
+  },
+  mounted() {
+//    console.log(this.$store.state.orderModule.orderEmail);
+    this.requestConfigSetting()
+    this.requestProduct()
+  }
+}
+</script>

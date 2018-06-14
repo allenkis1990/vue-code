@@ -1,0 +1,32 @@
+
+.vux-header .vux-header-right a.header-txt {
+  font-size: 14px;
+  line-height: 32px;
+  color: #fff;
+  display: inline-block;
+}
+.vux-header-title-area, .vux-header .vux-header-title a.header-tit {
+  text-align: center;
+  font-size: 17px;
+  line-height: 38px;
+  color: #fff;
+}
+
+.weui-tab .vux-header .vux-header-left,.weui-tab .vux-header .vux-header-right{
+  top: 8px;
+}
+.weui-tab .vux-header .vux-header-left .left-arrow:before{
+  top: 15px;
+}
+.weui-tab .vux-header .vux-header-left .vux-header-back{
+  padding-left: 20px;
+  padding-top: 5px;
+  color: #FFFFFF;
+}
+.weui-tab .vux-header .vux-header-left a vux-header-back{
+  top: 15px;
+  width: 22px;
+  height: 22px;
+}
+
+

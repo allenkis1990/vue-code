@@ -1,0 +1,838 @@
+<template>
+  <div class="container">
+    <!--标题栏-->
+    <div class="hb-header-box">
+      <div class="header-left">
+        <a href="javascript:void(0);" class="hb-ico ico-return" @click="back()"></a>
+      </div>
+      <div class="header-tit">订单详情</div>
+      <div class="header-right">
+        <a href="javascript:void(0);" class="hb-ico ico-center" v-if="false"></a>
+      </div>
+    </div>
+    <!--标题栏-->
+    <div class="hb-wrap-box">
+      <scroller lock-x scrollbar-y :height="scrollerHeight">
+        <div>
+          <div>
+            <!--交易成功-->
+            <div class="weui-cells">
+              <div class="weui-cell hb-order-status weui-cell_access">
+                <div class="weui-cell__hd"><span class="hb-ico trade-succ"></span></div>
+                <div class="weui-cell__bd">
+                  <p>订单状态：<span class="cr">{{getOrderStatusText(
+                    )}}</span></p>
+                  <p class="time">{{orderDetailInfo.createTime}}</p>
+                </div>
+                <a href="javascript:void(0);" class="weui-cell__ft" v-if="!isShowCancelOrderButton()" @click="moreStatusAction()">更多状态</a>
+                <div class="btn-bar" v-if="isShowCancelOrderButton()">
+                  <a href="javascript:void(0);" class="hb-btn-s" v-if="isShowCancelOrderButton() && orderDetailInfo.paymentChannel !== 'COLLECTIVE' && orderDetailInfo.paymentChannel !== 'PRESENT'" @click="cancelOrderAction()">取消订单</a>
+                  <a href="javascript:void(0);" class="hb-btn-s current" v-if="isShowGoToPayButton() && orderDetailInfo.paymentChannel !== 'COLLECTIVE' && orderDetailInfo.paymentChannel !== 'PRESENT'" @click="goToPayAction()">立即支付</a>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="weui-panel hb-panel">
+              <div class="weui-panel__hd">订单信息</div>
+              <div class="weui-cells">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    <p class="bd-items"><span class="tit-1">订单类型：</span><span class="txt">{{getOrderTypeText(orderDetailInfo.businessType)}}</span>
+                    </p>
+                    <p class="bd-items"><span class="tit-1">订单号：</span><span class="txt">{{orderDetailInfo.orderNo}}</span></p>
+                    <!-- <p class="bd-items"><span class="tit-1">原订单号：</span><span class="txt">{{}}</span></p> -->
+                    <p class="bd-items"><span class="tit-1">下单时间：</span><span class="txt">{{orderDetailInfo.createTime}}</span></p>
+                    <p class="bd-items" v-if="orderDetailInfo.paymentChannel !== undefined && orderDetailInfo.paymentChannel !== null">
+                      <span class="tit-1">支付方式：</span><span>{{getPayType(orderDetailInfo)}}</span>
+                    </p>
+                    <p class="bd-items" v-if="orderDetailInfo.status != 1 && orderDetailInfo.status != 2 && orderDetailInfo.status != 7 && orderDetailInfo.status != 8 && orderDetailInfo.paymentChannel !== 'PRESENT' && orderDetailInfo.paymentChannel !== 'COLLECTIVE'">
+                      <span class="tit-1">实付金额</span><span class="txt">￥{{orderDetailInfo.totalAmount}}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="weui-panel hb-panel" >
+              <div class="weui-panel__hd">报名班级</div>
+              <div class="weui-panel__bd" v-for="item in subOrderList" :key="item.subOrderNo" @click="goToClassDetail(item)">
+                <div class="weui-media-box weui-media-box_appmsg">
+                  <div class="weui-media-box__hd">
+                    <img class="weui-media-box__thumb" :src="getShowPhotoPath(item)">
+                  </div>
+                  <div class="weui-media-box__bd">
+                    <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+                    <p class="weui-media-box__desc">年度：{{getSkuPropertyValueNameByKeyName('继续教育年度',item)}}年</p>
+                    <p class="weui-media-box__desc">科目：{{getSkuPropertyValueNameByKeyName('科目',item)}}</p>
+                    <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+                  </div>
+                  <!-- 管理员缴费不显示金额 -->
+                  <div v-if="orderDetailInfo.paymentChannel === 'PERSONAL' || orderDetailInfo.paymentChannel === 'WECHAT'">
+                    <div class="price" style="color:#ed2424">￥
+                      <span class="num">{{item.totalAmount}}元</span>
+                    </div>
+                    <!--<div class="price" v-if="item.originalPrice !== item.totalAmount" style="color:#ed2424">
+                      <div class="now-price">
+                        <span class="activity-label">优惠中</span>￥
+                        <span class="num">{{item.totalAmount}}</span>
+                        <span class="old-price">￥{{item.originalPrice}}</span>
+                      </div>
+                    </div>-->
+                  </div>
+                </div>
+              </div>
+              <!-- <div class="weui-panel__ft">
+                <p class="tr">实付<span class="ml10 cr num">¥ {{orderDetailInfo.totalAmount}}</span></p>
+              </div> -->
+            </div>
+
+
+            <div class="weui-panel hb-panel" v-if="(orderDetailInfo.totalAmount!== undefined && orderDetailInfo.totalAmount!==null &&orderDetailInfo.totalAmount!== 0&&orderDetailInfo.invoiceDeliverInfo)">
+              <div class="weui-panel__hd">发票信息</div>
+              <div class="weui-cells">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    <p class="bd-items"><span class="tit-1">开票状态：</span><span class="txt">{{getInvoiceState()}}</span></p>
+                    <p class="bd-items"><span class="tit-1">开票方式：</span><span class="txt">{{getInvoicePrintTypeText()}}</span></p>
+                    <p class="bd-items"><span class="tit-1">抬头类型：</span><span class="txt">{{getInvoiceTitleTypeText()}}</span></p>
+                    <p class="bd-items"><span class="tit-1">发票抬头：</span><span class="txt">{{invoiceDeliverInfo.title}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.titleType === 2 || invoiceDeliverInfo.titleType === '2'">
+                      <span class="tit-1">纳税人识别号：</span><span class="txt">{{invoiceDeliverInfo.taxpayerNo}}</span></p>
+                    <!--<p class="bd-items"><span class="tit-1">查询验证码：</span><span class="txt">CL3453543543645654</span></p>-->
+                    <!--<p class="bd-items"><span class="tit-1">发票代码：</span><span class="txt">CL3453543543645654</span></p>-->
+                    <!--<p class="bd-items"><span class="tit-1">发票号：</span><span class="txt">CL3453543543645654</span></p>-->
+<!--
+                    <a :href="invoicePdfUrl" class="hb-btn-see-invoice" v-if="isShowSeeInvoice() && requestUrlSuccess">查看发票</a>
+-->
+                    <p class="bd-items" v-if="invoiceDeliverInfo.electron"><span class="tit-1">电子邮箱：</span><span class="txt">{{invoiceDeliverInfo.email}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.electron"><span class="tit-1">发送状态：</span><span class="txt">{{getIfBillNo()}}</span></p>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="weui-panel hb-panel" v-if="(orderDetailInfo.totalAmount!== undefined && orderDetailInfo.totalAmount!== 0 && orderDetailInfo.totalAmount!==null) && ( orderDetailInfo.invoiceDeliverInfo && !orderDetailInfo.invoiceDeliverInfo.electron)">
+              <div class="weui-panel__hd">发票配送信息</div>
+              <div class="weui-cells">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    <p class="bd-items"><span class="tit-1">配送方式：</span><span class="txt">{{getDeliverTypeText(invoiceDeliverInfo.deliverType)}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 1"><span class="tit-1">收货人：</span><span class="txt">{{getReceiveUserNameText(invoiceDeliverInfo.receiverName,invoiceDeliverInfo.mobileNo)}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 1"><span class="tit-1">收货地址：</span><span class="txt">{{invoiceDeliverInfo.addressDetails}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 1"><span class="tit-1">邮政编码：</span><span class="txt">{{invoiceDeliverInfo.postCode}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 2"><span class="tit-1">自取点名称：</span><span class="txt">{{invoiceDeliverInfo.selfAddressName}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 2"><span class="tit-1">自取地址：</span><span class="txt">{{invoiceDeliverInfo.selfPickUpAddress}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 2"><span class="tit-1">自取时间：</span><span class="txt">{{invoiceDeliverInfo.selfPickUpDate}}</span></p>
+                    <p class="bd-items" v-if="invoiceDeliverInfo.deliverType == 2"><span class="tit-1">备注：</span><span class="txt">{{invoiceDeliverInfo.remark}}</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="weui-panel hb-panel" v-if="(orderDetailInfo.totalAmount!== undefined && orderDetailInfo.totalAmount!== 0 && orderDetailInfo.totalAmount!==null) && ( orderDetailInfo.invoiceDeliverInfo && !orderDetailInfo.invoiceDeliverInfo.electron)&&orderDetailInfo.invoiceDeliverInfo.deliverType!==2 ">
+              <div class="weui-panel__hd">发票物流</div>
+              <div class="weui-cells">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    <div class="bd-items"><span class="tit-1">快递公司：</span><span class="txt">{{invoiceDeliverInfo.expressCompany?invoiceDeliverInfo.expressCompany:'-'}}</span>
+                    </div>
+                    <div class="bd-items">
+                      <span class="tit-1">快递单号：</span>
+                      <div class="txt">{{invoiceDeliverInfo.trackingNumber?invoiceDeliverInfo.trackingNumber:'-'}}
+                        <span class="btn-bar tr">
+<!--
+                    <a href="javascript:;" class="hb-btn-s" id="copy-btn" data-clipboard-target="#copyTarget" @click="changeCopyText(invoiceDeliverInfo.trackingNumber)" v-if="isShowCopyButton()">复制</a>
+-->
+                      <div v-if="invoiceDeliverInfo.expressCompanyUrl">
+                          <a href="javascript:void(0);"
+                             class="hb-btn-s current"
+                             @click="materialFlowRateProgressAction(invoiceDeliverInfo.expressCompanyUrl)">物流进度</a>
+
+                      </div>
+                  </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- V1.0.0修复版本隐藏 -->
+<!--
+             <div class="weui-panel hb-panel" v-if="isShowCerDeliverDeliveryInfo() && orderDetailInfo.orderGenerateType == '1'">
+              <div class="weui-panel__hd">发票物流</div>
+
+              <div class="weui-cells" v-for="item in cerDeliverInfo">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    &lt;!&ndash;<div class="bd-items"><span class="tit-1">证书名称：</span><span class="txt">{{item.cerName}}</span>
+                    </div>&ndash;&gt;
+&lt;!&ndash;
+                    <div class="bd-items"><span class="tit-1">证书编码：</span><span class="txt">{{item.cerNo}}</span></div>
+&ndash;&gt;
+                    <div class="bd-items"><span class="tit-1">快递公司：</span><span class="txt">{{item.expressCompany}}</span>
+                    </div>
+                    <div class="bd-items">
+                      <span class="tit-1">快递单号：</span>
+                      <div class="txt">{{item.trackingNumber}}
+                        <span class="btn-bar tr">
+                    <a href="javascript:;" class="hb-btn-s" id="copy-btn" data-clipboard-target="#copyTarget" @click="changeCopyText(item.trackingNumber)">复制</a>
+                    <a href="javascript:;" class="hb-btn-s current" @click="materialFlowRateProgressAction(item.expressCompanyUrl)">物流进度</a>
+                  </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+-->
+
+<!--
+            <div class="weui-panel hb-panel" v-if="isShowCerDeliverInfo() && orderDetailInfo.orderGenerateType == '1'">
+              <div class="weui-panel__hd">证书配送信息</div>
+              <div class="weui-cells">
+                <div class="weui-cell">
+                  <div class="weui-cell__bd">
+                    <p class="bd-items"><span class="tit-1">配送方式：</span><span class="txt"></span></p>
+                    <p class="bd-items" v-if="cetDeliverFirstInfo.deliverType == 1"><span class="tit-1">收货人：</span><span class="txt">{{getReceiveUserNameText(cetDeliverFirstInfo.reciverName,cetDeliverFirstInfo.mobileNo)}}</span></p>
+                    <p class="bd-items" v-if="cetDeliverFirstInfo.deliverType == 1"><span class="tit-1">收货地址：</span><span class="txt">{{getReceiveAddressText(cetDeliverFirstInfo.addressDetails,cetDeliverFirstInfo.postCode)}}</span></p>
+                    <p class="bd-items" v-if="cetDeliverFirstInfo.deliverType == 2"><span class="tit-1">取件地址：</span><span class="txt">{{cetDeliverFirstInfo.selfPickUpAddress}}</span></p>
+                    <p class="bd-items" v-if="cetDeliverFirstInfo.deliverType == 2"><span class="tit-1">自取时间：</span><span class="txt">{{cetDeliverFirstInfo.selfPickUpDate}}</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+-->
+
+            <!--<div class="weui-panel hb-panel">-->
+            <!--<div class="weui-panel__hd">发票及证书配送信息</div>-->
+            <!--<div class="weui-cells">-->
+            <!--<div class="weui-cell">-->
+            <!--<div class="weui-cell__bd">-->
+            <!--<p class="bd-items"><span class="tit-1">配送方式：</span><span class="txt">{{getDeliverTypeText()}}</span></p>-->
+            <!--<p class="bd-items"><span class="tit-1">收货人：</span><span class="txt">{{invoiceDeliverInfo.reciverName}}，{{invoiceDeliverInfo.mobileNo}}</span></p>-->
+            <!--<p class="bd-items"><span class="tit-1">收货地址：</span><span class="txt">{{invoiceDeliverInfo.addressDetails}}，{{invoiceDeliverInfo.postCode}}</span></p>-->
+            <!--</div>-->
+            <!--</div>-->
+            <!--</div>-->
+            <!--</div>-->
+
+            <!-- 发票配送订单 -->
+
+            <!--<div class="weui-panel hb-panel" >
+              <div class="weui-panel__hd" >发票配送</div>
+              <div href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg">
+                <div class="weui-media-box__hd">
+                  <img class="weui-media-box__thumb" src="../../../design/images/invoice-img.jpg" style="margin-top:.8em;">
+                </div>
+                <div class="weui-media-box__bd">
+                  <h4 class="weui-media-box__title">纸质发票配送费</h4>
+                  <p class="weui-media-box__desc">发票类型：纸质普票</p>
+                </div>
+                <div class="price" style="color: #ed2424">
+                  <div class="now-price">￥<span class="num">{{orderDetailInfo.subOrderList[0].originalPrice}}</span></div>
+                </div>
+              </div>
+            </div>-->
+            <!-- 关联订单信息 -->
+<!--
+            <div class="weui-panel hb-panel"  v-if="orderDetailInfo.associatedOrderDtoList != undefined && orderDetailInfo.associatedOrderDtoList.length != 0">
+              <div class="weui-panel__hd">关联订单</div>
+              <div class="weui-cells">
+                <div class="weui-cell" v-for="(item, index) in orderDetailInfo.associatedOrderDtoList" :key="index">
+                  <div class="weui-cell__bd">
+                    <p class="bd-items"><span class="tit-1">关联订单：</span><span class="txt">{{item.associatedOrderName}}</span>
+                    </p>
+                    <p class="bd-items"><span class="tit-1">订单号：</span><span class="txt">{{item.associatedOrderNo}}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+-->
+          </div>
+        </div>
+      </scroller>
+    </div>
+    <!-- <div class="complectinfo-box" v-if="isShowCompleteButton()" @click="goToComplectInfoAction(item)">完善配送信息</div> -->
+    <div id="copyTarget" style="opacity: 0;" ref="copyTarget"></div>
+  </div>
+</template>
+
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+  @import "../../../design/styles/webstyle.less";
+  .complectinfo-box {
+    background-color: #E59313;
+    color: white;
+    font-size: 14px;
+    width: 100%;
+    height: 45px;
+    text-align: center;
+    line-height: 45px;
+    position: absolute;
+    bottom: 0px;
+  }
+  .hb-btn-see-invoice{
+    width: 75px;
+    height: 30px;
+    line-height: 2.5;
+    text-align: center;
+    border: 1px solid #ddd;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    border-radius: 30px;
+    display: inline-block;
+    float: right;
+    color: #fff;
+    background-color: #0c7cdb;
+    font-size: 13px;
+    margin-top: 7px;
+    margin-bottom: 7px;
+  }
+</style>
+<script>
+
+  import { Scroller } from 'vux'
+  import * as storeTypes from '../../store/types'
+  import Clipboard from 'clipboard'
+  export default {
+    components: {
+      Scroller
+    },
+    mounted () {
+      this.orderNo = this.$route.query.orderNo
+      this.requestClassDetailInfo()
+      this.scrollerHeight = ((window.outerHeight - 45) || (window.innerHeight - 45)) + 'px'
+      let self = this
+      self.clipboard = new Clipboard('#copy-btn')
+      self.clipboard.on('success', function (e) {
+        self.toast('复制成功')
+        e.clearSelection()
+      })
+      self.clipboard.on('error', function (e) {
+        self.toast('复制失败')
+      })
+    },
+    beforeDestroy () {
+      this.clipboard.destroy()
+    },
+    data () {
+      return {
+        orderNo: '',
+        orderItem: {},
+        orderDetailInfo: {},
+        scrollerHeight: '',
+        clipboard: null,
+        invoicePdfUrl: null,
+        requestUrlSuccess: false
+      }
+    },
+    computed: {
+      // 发票配送信息（字典）
+      invoiceDeliverInfo () {
+        if (this.orderDetailInfo.invoiceDeliverInfo === undefined || this.orderDetailInfo.invoiceDeliverInfo === null) {
+          return {}
+        } else {
+          return this.orderDetailInfo.invoiceDeliverInfo
+        }
+      },
+      // 证书物流信息（数组）
+      cerDeliverInfo () {
+        if (this.orderDetailInfo.cerDeliverInfo === undefined || this.orderDetailInfo.cerDeliverInfo === null) {
+          return []
+        } else {
+          return this.orderDetailInfo.cerDeliverInfo
+        }
+      },
+      // 证书物流信息，证书物流数组信息的第一个对象
+      cetDeliverFirstInfo () {
+        if (this.cerDeliverInfo.length >= 1) {
+          return this.cerDeliverInfo[0]
+        } else {
+          return {}
+        }
+      },
+      // 获取子订单信息（数组）
+      subOrderList () {
+        if (this.orderDetailInfo.subOrderList === undefined || this.orderDetailInfo.subOrderList === undefined) {
+          return []
+        } else {
+          return this.orderDetailInfo.subOrderList
+        }
+      }
+    },
+    methods: {
+      /**
+       * 请求订单详细数据
+       */
+      requestClassDetailInfo () {
+        this.showLoading('加载中.....')
+        if (!this.orderNo.length) {
+          this.toast('订单号为空，无法获取订单信息')
+          return
+        }
+        let param = {
+          orderNo: this.orderNo
+        }
+        this.$store.dispatch(storeTypes.ORDER_GET_ORDER_DETAIL, param).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.orderDetailInfo = data.data
+            // 如果可以查看电子发票，去请求电子发票pdf的url
+            if (this.isShowSeeInvoice()) {
+              this.$store.dispatch(storeTypes.ORDER_GET_ELETRON_INVOICE_URL, {
+                invoiceId: this.orderDetailInfo.invoiceDeliverInfo.invoiceId
+              }).then((data) => {
+                if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+                  this.invoicePdfUrl = data.data.eletronInvoiceUrl;
+                  this.requestUrlSuccess = true;
+                }
+              })
+            }
+            // 取到未完善订单列表
+            this.unCompleteOrderList = this.$store.state.orderModule.needCompleteOrderList
+            // 设置信息是否已完善字段
+            this.orderDetailInfo.deleiverInfoComplete = true
+            if (this.checkIsUncomlteOrder(this.orderDetailInfo.orderNo)) {
+              this.orderDetailInfo.deleiverInfoComplete = false
+            } else {
+              this.orderDetailInfo.deleiverInfoComplete = true
+            }
+            if (!this.orderDetailInfo.deleiverInfoComplete && this.orderDetailInfo.deleiverInfoComplete !== undefined) {
+              let scrollCurrentHeight = this.scrollerHeight.substring(0, this.scrollerHeight.length - 2)
+              scrollCurrentHeight = scrollCurrentHeight - 45
+              this.scrollerHeight = scrollCurrentHeight + 'px'
+            }
+            return
+          }
+        }).catch(e => {
+          console.log('error>>>>>>>' + e)
+        })
+      },
+      // =========================获取文本事件=========================
+      getInvoicePrintTypeText () {
+        if (this.invoiceDeliverInfo.electron) {
+          return '电子发票'
+        } else {
+          return '纸质发票'
+        }
+      },
+      getInvoiceState () {
+        var invoiceState = '';
+        switch (this.invoiceDeliverInfo.state) {
+          case '0':
+            invoiceState = '未开票';
+            break;
+          case '1':
+            invoiceState = '已开票';
+            break;
+          case '2':
+            invoiceState = '已发货';
+            break;
+          case '3':
+            invoiceState = '已作废';
+            break;
+
+          default :
+            invoiceState = '-';
+        }
+        return invoiceState;
+      },
+      getDeliverTypeText (type) {
+        if (type === 1) {
+          return '邮寄'
+        } else if (type === 2) {
+          return '自取'
+        } else {
+          return ''
+        }
+      },
+      getInvoiceTitleTypeText () {
+        if (this.invoiceDeliverInfo.titleType === 1 || this.invoiceDeliverInfo.titleType === '1') {
+          return '个人'
+        } else if (this.invoiceDeliverInfo.titleType === 2 || this.invoiceDeliverInfo.titleType === '2') {
+          return '单位'
+        } else {
+          return ''
+        }
+      },
+      getPaymentChannelText (type) {
+        switch (type) {
+          case 'PERSONAL':
+            return '个人缴费'
+          case 'PRESENT':
+            return '管理员现场开通'
+          case 'COLLECTIVE':
+            return '管理员集体缴费'
+          case 'WECHAT':
+            return '微信支付'
+          default:
+            return ''
+        }
+      },
+
+      getPayType: function (detail) {
+        if (detail.tradeChannelCode) {
+          var tradeChannelCode = detail.tradeChannelCode;
+          switch (tradeChannelCode) {
+            case 'WXPAY':
+              return '微信';
+            case 'ALIPAY':
+              return '支付宝';
+            case 'CCB':
+              return '建设银行';
+            case 'CCB_B2B':
+              return '建设银行B2B支付';
+            case 'WX_PUBLIC_NO_PAY':
+              return '微信公众号支付';
+            case 'ALIPAY_OPENAPI_PC':
+              return '支付宝(pc端)'
+            case 'OTHER':
+              return '线下支付-导入开通'
+            default:
+              return '-';
+          }
+        } else {
+          return '-';
+        }
+      },
+      getReceiveUserNameText (name, phoneNum) {
+        if (name !== undefined && phoneNum !== undefined) {
+          return name + ',' + phoneNum
+        } else {
+          return ''
+        }
+      },
+      getReceiveAddressText (detailAddress, postCode) {
+        if (detailAddress !== undefined && postCode !== undefined) {
+          return detailAddress + ',' + postCode
+        } else {
+          return ''
+        }
+      },
+      getOrderTypeText (type) {
+        switch (type) {
+          case 'NORMAL':
+            return '购买订单'
+          case 'SWAP_PART':
+            return '换班订单'
+          case 'SWAP_COMPLETE':
+            return '换班订单'
+          default:
+            return ''
+        }
+      },
+      getOrderStatusText () {
+        switch (this.orderDetailInfo.status) {
+          case 1: {
+            return '未支付'
+          }
+          case 2: {
+            return '未支付'
+          }
+          case 3: {
+            return '开通中'
+          }
+          case 4: {
+            return '开通中'
+          }
+          case 5: {
+            return '开通中'
+          }
+          case 6: {
+            return '交易成功'
+          }
+          case 7: {
+            return '交易关闭'
+          }
+          case 8: {
+            return '支付中'
+          }
+        }
+      },
+      getIfBillNo: function () {
+        var billNo = this.invoiceDeliverInfo.billNo;
+        var ifBillNo = '';
+        if (billNo) {
+          ifBillNo = '电子发票已发往您指定的邮箱,请查收';
+        } else {
+          ifBillNo = '-';
+        }
+
+        return ifBillNo;
+      },
+      getShowPhotoPath (subItem) {
+        // if (subItem !== undefined && subItem !== null) {
+        //   if (subItem.photoPath !== undefined && subItem.photoPath.trim() !== '') {
+        //     return subItem.photoPath
+        //   }
+        // }
+        console.log(subItem);
+        if (subItem.photoPath !== undefined && subItem.photoPath.trim() !== '') {
+          return subItem.photoPath;
+        }
+        return require('../../../design/images/course-img.jpg')
+      },
+      /** 通过keyname获取对应的sku值 */
+      getSkuPropertyValueNameByKeyName (keyName, item) {
+        if (item === undefined || item.skuPropertyNameList === undefined) {
+          return ''
+        }
+        if (item.skuPropertyNameList.length === 0) {
+          return ''
+        }
+        let propertyName = ''
+        for (let i = 0; i < item.skuPropertyNameList.length; i++) {
+          let skuPropertyObject = item.skuPropertyNameList[i]
+          if (skuPropertyObject.skuPropertyName === keyName) {
+            propertyName = skuPropertyObject.skuPropertyValueName
+          }
+        }
+        return propertyName
+      },
+      // =========================显示事件=========================
+      isShowGoToPayButton () {
+        if (this.orderDetailInfo.status === 1 || this.orderDetailInfo.status === 2 || this.orderDetailInfo.status === 8) {
+          return true
+        } else {
+          return false
+        }
+      },
+      isShowCancelOrderButton () {
+        if (this.orderDetailInfo.status === 1 || this.orderDetailInfo.status === 2 || this.orderDetailInfo.status === 8) {
+          return true
+        } else {
+          return false
+        }
+      },
+      isShowCompleteButton () {
+        if (this.orderDetailInfo.deleiverInfoComplete === undefined) {
+          return false
+        }
+        if (!this.orderDetailInfo.deleiverInfoComplete) {
+          return true
+        } else {
+          return false
+        }
+      },
+      // 是否显示发票信息
+      isShowInvoiceInfo () {
+        if (this.orderDetailInfo.invoiceDeliverInfo === undefined || this.orderDetailInfo.invoiceDeliverInfo === null) {
+          return false
+        } else {
+          return true
+        }
+      },
+
+      // 是否显示发票配送信息，当发票信息不为空且不为电子发票的时候
+      isShowInvoiceInfoSendStatus () {
+        if (this.orderDetailInfo.invoiceDeliverInfo !== undefined && this.orderDetailInfo.invoiceDeliverInfo !== null && !this.orderDetailInfo.invoiceDeliverInfo.electron) {
+          return true
+        } else {
+          return false
+        }
+      },
+      // 是否显示发票物流信息,当发票信息不为空且不为电子发票且配送方式为邮寄的时候
+      isShowInvoiceDeliveryInfo () {
+        if (this.orderDetailInfo.invoiceDeliverInfo !== undefined && this.orderDetailInfo.invoiceDeliverInfo !== null && this.orderDetailInfo.invoiceDeliverInfo.deliverType === 1 && !this.orderDetailInfo.invoiceDeliverInfo.electron && this.invoiceDeliverInfo.expressCompany && this.invoiceDeliverInfo.trackingNumber) {
+          return true
+        } else {
+          return false
+        }
+      },
+      // 是否显示证书信息 至少有一个配送物流信息
+      isShowCerDeliverInfo () {
+        if (this.orderDetailInfo.cerDeliverInfo === undefined || this.orderDetailInfo.cerDeliverInfo === null || this.orderDetailInfo.cerDeliverInfo.length === 0) {
+          return false
+        } else {
+          return true
+        }
+      },
+      // 是否显示证书配送物流信息
+      isShowCerDeliverDeliveryInfo () {
+        if (this.orderDetailInfo.cerDeliverInfo !== undefined && this.orderDetailInfo.cerDeliverInfo !== null && this.orderDetailInfo.cerDeliverInfo.length >= 0 && this.cetDeliverFirstInfo.deliverType === 1) {
+          return true
+        } else {
+          return false
+        }
+      },
+      isShowCopyButton () {
+        if (Clipboard.isSupported()) {
+          return true
+        } else {
+          return false
+        }
+      },
+      isShowSeeInvoice () {
+        if (!this.orderDetailInfo.invoiceDeliverInfo) {
+          // 没有发票
+          return false;
+        } else if (!this.orderDetailInfo.invoiceDeliverInfo.electron) {
+          // 不是电子发票
+          return false;
+        } else if (this.orderDetailInfo.invoiceDeliverInfo.invoiceState !== '5' && this.orderDetailInfo.invoiceDeliverInfo.invoiceState !== '9') {
+          // 电子发票状态不为5或9
+          return false;
+        }
+        return true;
+      },
+      // =========================按钮事件=========================
+      moreStatusAction () {
+        let param = {
+          orderNo: this.orderDetailInfo.orderNo,
+          statusLogList: this.orderDetailInfo.statusLogList
+        }
+        this.push({path: '/statusChange', query: param})
+      },
+      goToPayAction () {
+        let self = this;
+        this.$vux.confirm.show({
+          title: '提示',
+          content: '是否确认付款？</br>请核对订单信息正确',
+          confirmText: '继续支付',
+          onShow() {
+            console.log('plugin show')
+          },
+          onHide() {
+            console.log('plugin hide')
+          },
+          onCancel() {
+            console.log('plugin cancel')
+          },
+          onConfirm() {
+            let param = {
+              orderNo: self.orderDetailInfo.orderNo
+            }
+            if (self.orderDetailInfo.orderGenerateType === '3') {
+              param.orderNo = self.orderDetailInfo.associatedOrderDtoList[0].associatedOrderNo
+            }
+            self.push({ path: '/confirmPayOrder', query: param })
+          }
+        })
+        // if (this.orderDetailInfo.paymentChannel !== undefined && this.orderDetailInfo.paymentChannel === 'WECHAT') {
+        //   let param = {
+        //     orderNo: this.orderDetailInfo.orderNo
+        //   }
+        //   this.push({path: '/confirmPayOrder', query: param})
+        // } else {
+        //   this.toast('订单的支付方式不是【微信支付】，请前往PC端支付或者取消订单，重新下单！')
+        // }
+      },
+      cancelOrderAction () {
+        this.showConfirm()
+      },
+      goToComplectInfoAction () {
+        this.$store.commit(storeTypes.ORDER_SET_NEED_COMPLETE_ORDER_LIST, [this.orderDetailInfo.orderNo])
+        this.$store.commit(storeTypes.COMPLETE_ORDER_NEED_INVOICE, false)
+        this.push({
+          path: '/completeOrder',
+          query: {path: this.$route.path, completeOneOrAll: true}
+        })
+      },
+      goToClassDetail (item) {
+        let skuKeyValueObject = this.getSkuObjValue('继续教育年度', item.skuPropertyNameList)
+        // 已经购买过进入我的班级详情页，未购买进入商品详情页，交易成功才能进详情页
+        if (this.orderDetailInfo.status === 4 || this.orderDetailInfo.status === 5 || this.orderDetailInfo.status === 6 || this.orderDetailInfo.status === 7 || this.orderDetailInfo.status === 8) {
+          let param = {
+            trainingClassId: item.trainClassId,
+            yearObject: skuKeyValueObject
+          }
+          this.push({path: '/myClassDetail', query: param})
+        } else {
+          let param = {
+            skuId: item.skuId,
+            yearObject: skuKeyValueObject.skuPropertyValueName
+          }
+          this.push({path: '/classDetail', query: param})
+        }
+      },
+      getSkuObjValue (keyName, array) {
+        for (let item in array) {
+          let itemObject = array[item]
+          if (itemObject.skuPropertyName === keyName) {
+            return itemObject
+          }
+        }
+        return {}
+      },
+      materialFlowRateProgressAction (expressCompanyUrl) {
+        if (expressCompanyUrl !== undefined) {
+          if (expressCompanyUrl.length) {
+            if (expressCompanyUrl.indexOf('http') > -1) {
+              window.location.href = expressCompanyUrl
+            } else {
+              expressCompanyUrl = 'http://' + expressCompanyUrl
+              window.location.href = expressCompanyUrl
+            }
+          }
+        }
+      },
+      changeCopyText (content) {
+        this.$refs.copyTarget.innerText = content
+      },
+      /**
+       * 显示取消提示
+       */
+      showConfirm () {
+        if (this.orderDetailInfo.orderNo === undefined || this.orderDetailInfo.orderNo.trim() === '') {
+          this.toast('订单号为空，无法取消订单')
+          return
+        }
+        let self = this
+        this.$vux.confirm.show({
+          title: '提示',
+          content: `是否确认取消订单？`,
+          confirmText: '继续取消订单',
+          onShow () {
+            console.log('plugin show')
+          },
+          onHide () {
+            console.log('plugin hide')
+          },
+          onCancel () {
+            console.log('plugin cancel')
+          },
+          onConfirm () {
+            // 确认取消订单
+            self.realCancelOrder()
+          }
+        })
+      },
+      // （用户点击确认取消订单时调用）调用取消订单接口
+      realCancelOrder () {
+        let self = this
+        let param = {
+          orderNo: this.orderDetailInfo.orderNo
+        }
+        this.$store.dispatch(storeTypes.ORDER_CANCEL_ORDER, param).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.toast('订单取消成功')
+            setTimeout(function () {
+              self.requestClassDetailInfo()
+            }, 1000)
+          } else {
+            this.toast(data.head.message)
+          }
+        }).catch(e => {
+          console.log('error>>>>>>>' + e)
+        })
+      },
+      // 检测是否已经完善
+      checkIsUncomlteOrder (orderNo) {
+        for (let key in this.unCompleteOrderList) {
+          let order = this.unCompleteOrderList[key]
+          if (order === orderNo) {
+            return true
+          }
+        }
+        return false
+      }
+    }
+  }
+</script>

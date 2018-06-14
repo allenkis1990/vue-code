@@ -1,0 +1,76 @@
+@import "theme";
+
+.b{font-weight: bold;}
+
+.tc{text-align: center;}
+.tr{text-align: right;}
+.tl{text-align: left;}
+
+.to{
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bor-t{border-top: 1px solid #e8e8e8;}
+
+
+/* 字体大小 */
+.fs24{font-size: .24rem;}
+.fs26{font-size: .26rem;}
+.fs28{font-size: .28rem;}
+.fs30{font-size: .3rem;}
+.fs32{font-size: .32rem;}
+.fs40{font-size: .4rem;}
+
+
+/* 字体颜色 */
+.ci{color: @important;}
+.cb{color: @base;}
+.c0{color: #000;}
+.c3{color: #333;}
+.c6{color: #666;}
+.c9{color: #999;}
+.cf{color: #fff;}
+
+.mt5{margin-top: .05rem;}
+.mt10{margin-top: .1rem;}
+.mt20{margin-top: .2rem;}
+.mt30{margin-top: .3rem;}
+.mt40{margin-top: .4rem;}
+.mt60{margin-top: .6rem;}
+.mt80{margin-top: .8rem;}
+.mt150{margin-top: 1.5rem;}
+
+.mr20{margin-right: .2rem;}
+
+.ml10{margin-left: .1rem;}
+.ml20{margin-left: .2rem;}
+.ml30{margin-left: .3rem;}
+.ml60{margin-left: .6rem;}
+
+.pr40{padding-right: .4rem;}
+
+.pt30{padding-top: .3rem;}
+.pt90{padding-top: .9rem;}
+.pt100{padding-top: 1rem;}
+
+.pb20{padding-bottom: .2rem;}
+.pb30{padding-bottom: .3rem;}
+
+.p20{padding: .2rem;}
+.p50{padding: .5rem;}
+.plr50{
+  padding-left: .5rem;
+  padding-right: .5rem;
+}
+.ptb30{
+  padding-top: .3rem;
+  padding-bottom: .3rem;
+}
+
+.pb100{
+  padding-bottom: 1rem;
+}
+
+.w300{width: 3rem;}

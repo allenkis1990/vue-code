@@ -1,0 +1,115 @@
+<template>
+  <div class="container weui-tab">
+    <div class="weui-tab__panel">
+      <div class="weui-msg weui-msg-1">
+        <div class="weui-msg__icon-area"><i class="weui-icon-success weui-icon_msg"></i></div>
+        <div class="weui-msg__text-area">
+          <h2 class="weui-msg__title">支付成功</h2>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel">
+        <div class="weui-panel__hd">订单信息</div>
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p><span class="tit">订单号</span>{{order.orderNo}}</p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p><span class="tit">下单时间</span><span class="ml10">{{order.createTime}}</span></p></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><p><span class="tit">付款金额</span><span class="cr">¥ {{order.totalAmount}}</span></p></div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel">
+        <div class="weui-panel__hd">报名班级</div>
+        <div class="weui-panel__bd" v-for="(item,index) in order.subOrderList" :key="index">
+          <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="item.photoPath">
+              <!-- <img class="weui-media-box__thumb" src="../../../design/images/course-img.jpg"> -->
+            </div>
+            <div class="weui-media-box__bd" @click="goToTrainingDetail(item)">
+              <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+              <p class="weui-media-box__desc">年度：{{getTrainingYear(item)}}年</p>
+              <p class="weui-media-box__desc">科目：{{getTrainingType(item)}}</p>
+              <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="weui-tabbar hb-tabbar">
+      <div @click="gotoOrderDetail()" class="hb-btn">查看订单详情</div>
+      <!--<div @click="goToTrainingDetail()" class="hb-btn hb-btn-1">查看班级</div>-->
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+</style>
+<script>
+export default {
+  data () {
+    return {
+      order: {
+        orderNo: '',
+        createTime: '',
+        totalAmount: '',
+        subOrderList: []
+      }
+    }
+  },
+  computed: {},
+  methods: {
+    getTrainingYear (item) {
+      if (item.skuPropertyNameList) {
+        console.log(item)
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '继续教育年度') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    getTrainingType (item) {
+      for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+        if (item.skuPropertyNameList[i].skuPropertyName === '科目') {
+          return item.skuPropertyNameList[i].skuPropertyValueName
+        }
+      }
+    },
+    getMajor (item) {
+      for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+        if (item.skuPropertyNameList[i].skuPropertyName === '专业') {
+          return item.skuPropertyNameList[i].skuPropertyValueName
+        }
+      }
+    },
+    goToTrainingDetail: function () {
+      var obj = this.order.subOrderList[0]
+      var yearObj = {
+        skuPropertyId: '',
+        skuPropertyName: '',
+        skuPropertyValueId: '',
+        skuPropertyValueName: ''
+      }
+      for (var i = 0; i < obj.skuPropertyNameList.length; i++) {
+        if (obj.skuPropertyNameList[i].skuPropertyName === '继续教育年度') {
+          yearObj = obj.skuPropertyNameList[i]
+          break
+        }
+      }
+      this.replace({path: '/myClassDetail', query: {trainingClassId: obj.trainClassId, yearObject: yearObj}})
+    },
+    gotoOrderDetail: function () {
+      this.replace({path: '/orderDetail', query: {orderNo: this.order.orderNo}})
+    }
+  },
+  mounted () {
+    if (this.$route.query.order) {
+      this.order = this.$route.query.order
+    }
+  }
+}
+</script>

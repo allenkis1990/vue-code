@@ -1,0 +1,316 @@
+<template>
+  <div class="container">
+    <div class="hb-header-box">
+      <div class="header-left" @click="drawerVisibilityEvent">
+        <a href="javascript:void(0);" class="hb-ico ico-menu"></a>
+      </div>
+      <div class="header-tit">班级列表</div>
+      <!-- <div class="header-right" @click="rightEvent" v-if="!$store.getters.hasLogin">
+        <a href="javascript:void(0);" class="header-txt">登录/注册</a>
+      </div> -->
+    </div>
+    <!--年度选择-->
+    <!--/年度选择-->
+    <div class="hb-year-box" style="height:45px;">
+      <div class="year-tit">年度</div>
+      <scroller class="year-bd" lock-y scrollbar-x :bounce=false :scrollbar-x=false>
+        <tab :style="tabStyle"
+             :scroll-threshold="scrollThreshold"
+             bar-active-color="#cb1919"
+             :line-width="2"
+             :custom-bar-width="getBarWidth">
+          <tab-item v-for="(item,index) in yearList" :key="index" :selected="index === 0"
+                    @click.native="tabItemEvent(item)">
+            {{item.skuPropertyValueName}}
+          </tab-item>
+        </tab>
+      </scroller>
+    </div>
+    <!--/年度选择-->
+    <!--班级列表-->
+    <scroller
+      style="padding-top: 87px; box-sizing: border-box;"
+      :height="scrollerHeight"
+      lock-x
+      scrollbar-y
+      use-pulldown
+      @on-pulldown-loading="refreshData" v-model="scroller" ref="scroller">
+      <div class="weui-panel weui-panel_access hb-panel-3">
+        <no-data v-if="!classList.length"></no-data>
+        <div class="weui-panel__bd" v-for="(item,index) in classList" :key="index" @click="goClassDetail(item)">
+          <a href="javascript:void(0);" class="weui-media-box weui-media-box_appmsg">
+            <div class="weui-media-box__hd">
+              <img class="weui-media-box__thumb" :src="iamgeUrl(item)">
+              <!--<span class="label">{{classState}}</span>-->
+            </div>
+            <div class="weui-media-box__bd">
+              <h4 class="weui-media-box__title">{{item.skuName}}</h4>
+              <p class="weui-media-box__desc">年度：{{skuPropertyValue(item, '继续教育年度')}}年</p>
+              <p class="weui-media-box__desc">
+                科目：{{skuPropertyValue(item, '科目')}}</p>
+              <p class="weui-media-box__desc">学时：{{item.trainingPeriod}}</p>
+            </div>
+            <!-- 有优惠 -->
+            <!--<div class="price" v-if="item.haveDiscount">
+              <div class="now-price"><span class="activity-label">优惠中</span>￥<span class="num">{{item.dealPrice}}</span><span class="old-price">￥{{item.originalPrice}}</span></div>
+            </div>-->
+            <!-- 无优惠 -->
+            <div class="price">
+              ￥<span class="num">{{item.amount}}</span>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div slot="pulldown" class="xs-plugin-pulldown-container xs-plugin-pulldown-down"
+           style="position: absolute; width: 100%; height: 40px; line-height: 40px; top: -60px; text-align: center;">
+        <span v-show="scroller.pulldownStatus === 'default'"></span>
+        <span class="pulldown-arrow" v-show="scroller.pulldownStatus === 'down' || scroller.pulldownStatus==='up'"
+              :class="{'rotate': scroller.pulldownStatus === 'up'}"
+              style="font-size: 16px;font-weight: bold;">↓</span>
+        <div v-show="scroller.pulldownStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+              刷新中...
+              </span>
+          </p>
+        </div>
+      </div>
+    </scroller>
+    <!--/班级列表-->
+
+    <!--返回顶部-->
+    <a href="javascript:void(0);" class="hb-go-top" @click="goTopEvent">
+      <img src="../../../design/images/icon-top.png">
+    </a>
+    <!--/返回顶部-->
+  </div>
+</template>
+
+<style lang="less">
+  @import "~vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+  @import "../../../design/styles/webstyle.less";
+</style>
+
+<script>
+  import { Tab, TabItem, Scroller, Spinner, LoadMore, InlineLoading } from 'vux'
+  import NoData from '../../components/NoData.vue'
+  import * as storeTypes from '../../store/types'
+
+  export default {
+    components: {
+      Tab,
+      TabItem,
+      Scroller,
+      Spinner,
+      LoadMore,
+      InlineLoading,
+      NoData
+    },
+    data () {
+      return {
+        scrollerHeight: '',
+        scroller: {
+          pullupStatus: 'default',
+          pulldownStatus: 'default'
+        },
+        scorllerStatus: 0,
+        tabItem: {
+          height: 40,
+          width: 80,
+          barWidth: 20
+        },
+        noMore: false,
+        orderNo: ''
+      }
+    },
+    computed: {
+      /**
+       * 年度tab的样式
+       * @returns {{width: string, height: string, disabled: string}}
+       */
+      tabStyle () {
+        return {
+          width: this.yearList.length * this.tabItem.width + 'px',
+          height: this.tabItem.height + 'px',
+          disabled: '#FFFFFF'
+        }
+      },
+      scrollThreshold() {
+        return this.yearList.length;
+      },
+      /**
+       * 年份数据
+       * @returns {*}
+       */
+      yearList () {
+        if (this.$store.state.productModule.yearList === undefined || this.$store.state.productModule.yearList === '') {
+          return []
+        }
+        return this.$store.state.productModule.yearList
+      },
+      /**
+       * 班级数据
+       * @returns {*}
+       */
+      classList () {
+        let classList = this.$store.state.productModule.trainingList
+        if (classList === undefined || classList === null) {
+          return []
+        }
+        return classList
+      },
+      classState (trainingItemStatus) {
+        if (trainingItemStatus === 0) {
+          return ''
+        } else if (trainingItemStatus === 1) {
+          return '退班中'
+        } else if (trainingItemStatus === 2) {
+          return '失效'
+        }
+      }
+    },
+    mounted () {
+      this.scrollerHeight = (window.outerHeight || window.innerHeight) + 'px';
+      this.requestYear();
+    },
+    methods: {
+      /**
+       * 请求年份列表
+       */
+      requestYear () {
+        if (this.yearList.length === 0) this.showLoading('加载中.....')
+        this.$store.dispatch(storeTypes.PRODUCE_CLASS_YEARS_REQUEST).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.requestClassList(this.$store.state.productModule.yearList[0])
+            return
+          }
+        }).catch(e => {
+          console.log('error>>>>>>>' + e)
+        })
+      },
+      /**
+       * 请求班级列表
+       */
+      requestClassList (params) {
+        if (this.scorllerStatus === 0) {
+          if (this.classList.length === 0) this.showLoading('加载中.....')
+        }
+        this.$store.dispatch(storeTypes.PRODUCE_CLASS_LIST_REQUEST, params).then(data => {
+          this.loadingUIState()
+          if (this.$refs.scroller !== undefined) this.$refs.scroller.reset({top: 0})
+          if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(data.head.message)
+          }
+        }).catch(e => {
+          this.loadingUIState()
+          console.log('error>>>>>>>' + e)
+        })
+      },
+      /**
+       * 加载视图层
+       */
+      loadingUIState () {
+        if (this.scorllerStatus === 1) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePulldown()
+            this.scroller.pulldownStatus = 'default'
+            this.scorllerStatus = 0
+            return
+          }
+        }
+        this.hideLoading()
+      },
+      /**
+       * 上拉刷新
+       */
+      refreshData () {
+        let params = {
+          skuPropertyName: '培训年度',
+          skuPropertyValueId: this.$store.state.productModule.skuPropertySearch.skuPropertyValueId
+        }
+        this.scorllerStatus = 1
+        this.requestClassList(params)
+      },
+      /**
+       * 年度tab的宽度
+       * @returns {string}
+       */
+      getBarWidth () {
+        return this.tabItem.barWidth + 'px'
+      },
+      /**
+       * 是否显示菜单 点击事件
+       */
+      drawerVisibilityEvent () {
+        this.$store.commit(storeTypes.GLOBAL_SET_DRAWER, true)
+      },
+      /**
+       * 年度tab   点击事件
+       * @param item
+       */
+      tabItemEvent (item) {
+        this.$store.commit(storeTypes.PRODUCE_CLASS_LIST_SEARCH_PROPERTY, item)
+        this.requestClassList(item)
+      },
+      /**
+       * 滚动顶部  点击事件
+       */
+      goTopEvent () {
+        this.$refs.scroller.reset({top: 0})
+      },
+      /**
+       * 标题栏的右侧  点击事件
+       */
+      rightEvent () {
+        this.push('/login')
+      },
+      /**
+       * 班级列表的item  点击事件
+       */
+      goClassDetail (item) {
+        this.$router.push({
+          path: '/classDetail',
+          query: {
+            yearObject: this.skuPropertyObeject(item, '继续教育年度').skuPropertyValueName,
+            amount: item.amount,
+            skuId: item.skuId
+          }
+        })
+      },
+      iamgeUrl (item) {
+        if (item.photoPath === undefined) {
+          return require('../../../design/images/course-img.jpg')
+        }
+        return item.photoPath
+      },
+      skuPropertyValue (item, property) {
+        let skuPropertyObeject = this.skuPropertyObeject(item, property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null) {
+          return skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyValueCOpy (item, property) {
+        let skuPropertyObeject = this.skuPropertyObeject(item, property)
+        if (skuPropertyObeject !== undefined && skuPropertyObeject !== null && skuPropertyObeject.skuPropertyValueName !== '') {
+          return '/' + skuPropertyObeject.skuPropertyValueName
+        }
+        return ''
+      },
+      skuPropertyObeject (item, property) {
+        let skuPropertyNameList = item.skuPropertyNameList
+        if (skuPropertyNameList === undefined || skuPropertyNameList === null) {
+          return ''
+        }
+        for (let i = 0; i < skuPropertyNameList.length; i++) {
+          if (skuPropertyNameList[i].skuPropertyName === property) {
+            return skuPropertyNameList[i]
+          }
+        }
+        return ''
+      }
+    }
+  }
+</script>

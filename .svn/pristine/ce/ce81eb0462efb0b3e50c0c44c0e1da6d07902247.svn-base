@@ -1,0 +1,105 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import Base from '@/views/Base.vue'
+import Category from '@/views/category/Category'
+import Center from '@/views/center/Center'
+import Home from '@/views/home/Home'
+import ShoppingCart from '@/views/shoppingCart/shoppingCart'
+// import MyCourse from '@/views/my-course/MyCourse'
+import PulldownPullup from '@/views/home/PulldownPullup'
+import RefundLog from '@/views/order/RefundLog'
+import StatusChange from '@/views/order/StatusChangeLog'
+import TrainingChangeLog from '@/views/order/TrainingChangeLog'
+import ConfirmPayOrder from '../views/order/ConfirmPayOrder'
+import CreateOrder from '../views/order/CreateOrder/CreateOrder'
+import OrderPay from '../views/order/CreateOrder/OrderPay'
+import ConfigInvoiceInfo from '../views/order/CreateOrder/ConfigInvoiceInfo'
+import ConfigInvoiceDeliver from '../views/order/CreateOrder/ConfigInvoiceDeliver'
+// import ConfigCerDeliver from '../views/order/CreateOrder/ConfigCerDeliver'
+import CompleteOrder from '../views/order/CompleteOrder/CompleteOrder'
+import ConfigCompleteInvoiceInfo from '../views/order/CompleteOrder/ConfigCompleteInvoiceInfo'
+import ConfigCompleteInvoiceDeliver from '../views/order/CompleteOrder/ConfigCompleteInvoiceDeliver'
+// import ConfigCompleteCerDeliver from '../views/order/CompleteOrder/ConfigCompleteCerDeliver'
+import TrainingCertificate from '../views/certificate/TrainingCertificate' // 培训证明列表
+import Login from '../views/account/Login'
+import LoginByPassword from '../views/account/LoginByPassword'
+import Register from '../views/account/Register.vue'
+import ClassDetail from '../views/home/classDetail/ClassDetail.vue'
+import ForgotPassword from '../views/account/ForgotPassword.vue'
+import setNewPassword from '../views/account/setNewPassword.vue'
+import ForgotPasswordSuccessful from '../views/account/ForgotPassword_successful.vue'
+// import MyClass from '../views/my-class/MyClass.vue'
+import MyClassDetail from '../views/my-class/MyClassDetail.vue'
+import OrderList from '../views/order/OrderList.vue'
+import AuthLogin from '../views/common/AuthLogin.vue'
+import Mine from '@/views/account/Mine'
+import PersonalInfo from '@/views/account/PersonalInfo'
+// import ChangePassword from '@/views/account/ChangePassword'
+// import ChangeTelephoneNum from '@/views/account/ChangeTelephoneNum'
+import ReceiptInformation from '@/views/account/ReceiptInformation'
+import ReceiptInformationEdit from '@/views/account/ReceiptInformationEdit'
+import MoreSubOrderList from '@/views/order/MoreSubOrderList'
+import OrderDetail from '@/views/order/OrderDetail'
+import OrderPaidSuccess from '@/views/order/OrderPaidSuccess'
+import CertificateDetail from '../views/certificate/CertificateDetail.vue'
+import Agreement from '../views/Account/Agreement.vue'
+import NewAgreement from '../views/Account/NewAgreement.vue'
+Vue.use(Router)
+const router = new Router({
+  routes: [
+    {path: '/', redirect: '/authLogin'},
+    {
+      path: '/demo',
+      component: Base,
+      children: [
+        {path: 'home', name: 'Home', component: Home},
+        {path: 'category', component: Category},
+        {path: 'center', component: Center},
+        // {path: 'myClass', component: MyClass},
+        {path: 'orderList', component: OrderList},
+        {path: 'mine', component: Mine},
+        {path: 'cerList', component: TrainingCertificate},
+        {path: 'shoppingCart', component: ShoppingCart}
+      ]
+    },
+    {path: '/test/PulldownPullup', component: PulldownPullup},
+    // OrderModule
+    {path: '/moreSubOrderList', name: 'moreSubOrderList', component: MoreSubOrderList},
+    {path: '/orderDetail', component: OrderDetail},
+    {path: '/confirmPayOrder', component: ConfirmPayOrder},
+    {path: '/orderPaidSuccess', component: OrderPaidSuccess},
+    {path: '/refundLog', component: RefundLog},
+    {path: '/statusChange', component: StatusChange},
+    {path: '/trainingChangeLog', component: TrainingChangeLog},
+    {path: '/createOrder', name: 'createOrder', component: CreateOrder},
+    {path: '/orderPay', name: 'orderPay', component: OrderPay},
+    {path: '/configInvoiceInfo', component: ConfigInvoiceInfo},
+    {path: '/configInvoiceDeliver', component: ConfigInvoiceDeliver},
+    // {path: '/configCerDeliver', component: ConfigCerDeliver},
+    {path: '/completeOrder', component: CompleteOrder},
+    {path: '/configCompleteInvoiceInfo', component: ConfigCompleteInvoiceInfo},
+    {path: '/configCompleteInvoiceDeliver', component: ConfigCompleteInvoiceDeliver},
+    // {path: '/configCompleteCerDeliver', component: ConfigCompleteCerDeliver},
+    // OtherModule
+    {path: '/login', name: 'Login', component: Login},
+    {path: '/loginByPassword', name: 'LoginByPassword', component: LoginByPassword},
+    {path: '/regiter', component: Register, meta: {keepAlive: true}},
+    {path: '/classDetail', name: 'classDetail', component: ClassDetail},
+    {path: '/myClassDetail', component: MyClassDetail},
+    {path: '/forgotPassword', component: ForgotPassword},
+    {path: '/setNewPassword', component: setNewPassword},
+    {path: '/forgotPasswordSuccessful', component: ForgotPasswordSuccessful},
+    {path: '/authLogin', component: AuthLogin},
+    {path: '/personalInfo', component: PersonalInfo},
+    // V1.0.0修复版本隐藏
+    // {path: '/changePassword', component: ChangePassword},
+    // {path: '/changeTelephoneNum', component: ChangeTelephoneNum},
+    {path: '/receiptInformation', component: ReceiptInformation},
+    {path: '/receiptInformationEdit', component: ReceiptInformationEdit},
+    {path: '/certificateDetail', component: CertificateDetail},
+    {path: '/agreement', component: Agreement, meta: {keepAlive: false}},
+    {path: '/newAgreement', component: NewAgreement}
+  ]
+})
+
+export default router

@@ -1,0 +1,86 @@
+<template>
+  <div class="container bg-w">
+    <div class="p25 tc">
+      <img class="login-img" src="../../../design/images/login-bg.png" alt=" "/>
+      <div class="fs16">登录失败，请重新操作</div>
+      <div class="weui-btn weui-btn_primary mt25" @click="loginEvent">重新登录</div>
+    </div>
+  </div>
+</template>
+<script>
+  import * as storeTypes from '../../store/types'
+  import LoginUtil from '../../common/core/Login'
+  import AppConstant from '../../global/constants/AppConstant'
+
+  export default {
+    data () {
+      return {}
+    },
+    methods: {
+      loginEvent () {
+        this.hasBindWXRquest()
+      },
+      hasBindWXRquest () {
+        let params = {
+          unionId: this.getCookie(AppConstant.cookie.unionId),
+          openId: this.getCookie(AppConstant.cookie.openId)
+        }
+        // let params = {
+        //   unionId: window.localStorage.getItem(AppConstant.localStorage.unionId),
+        //   openId: window.localStorage.getItem(AppConstant.localStorage.openId)
+        // }
+        this.showLoading('加载中......')
+        this.$store.dispatch(storeTypes.ACCOUNT_WX_HASBIND_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            // 微信账号是否绑定账号
+            if (data.data.haveBind) {
+              return this.login()
+            } else {
+              this.replace('/regiter')
+              return
+            }
+          }
+
+          let url = this.getCookie(AppConstant.cookie.beforeLoginUrl)
+          if (url === undefined || url.length <= 0 || url === this.pages.Home) {
+            this.setCookie(AppConstant.cookie.beforeLoginUrl, window.location.href)
+          }
+          this.replace(this.pages.Login)
+        }).catch(e => {
+          this.hideLoading()
+          console.log('--------------------------获取是否绑定微信异常----------------------------------' + e)
+        })
+      },
+      login () {
+        this.showLoading('加载中......')
+        let context = this
+        LoginUtil.login(this.getCookie(AppConstant.cookie.openId), this.getCookie(AppConstant.cookie.unionId), this.getCookie(AppConstant.cookie.accessToken), this.getCookie(AppConstant.cookie.nickname), this, console, storeTypes).then(data => {
+          this.hideLoading()
+          if (data !== undefined && data !== null && data.state === true) {
+            context.$store.commit(storeTypes.GLOBAR_LOGIN_SET, true)
+            // 判断是否查看过新协议，false则跳转到新协议路由，并将要跳转的地址作为参数传递
+            let hasSeeNewAgreement = JSON.parse(context.getCookie(AppConstant.cookie.userInfo)).hasSeeNewAgreement;
+            if (!hasSeeNewAgreement) {
+              context.replace({path: '/newAgreement', params: {url: context.pages.Home}});
+            } else {
+              context.replace(context.pages.Home)
+            }
+          } else {
+            if (data !== undefined && data !== null) {
+              context.toast(data.message)
+            } else {
+              context.toast('登录失败')
+            }
+            context.replace(context.pages.Login)
+          }
+        }).catch(e => {
+          context.hideLoading()
+          console.log('---------------------登录异常-----------------' + e)
+          context.toast('登录失败')
+        })
+      }
+    }
+
+  }
+</script>

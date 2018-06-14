@@ -1,0 +1,422 @@
+<template>
+  <!--结算-->
+  <div class="contain hb-box">
+    <div class="hb-box-bd">
+      <div class="hb-warm-tips">
+        <img class="ico-tips" src="../../../../design/images/icon-tips.png" />
+        <span class="tips-txt">下单后，请在24小时内完成支付。超出24小时再支付可能导致购买失败，需重新下单购买。</span>
+      </div>
+      <div class="weui-cells hb-panel bor-b20">
+        <div class="weui-cell hb-order-status">
+          <div class="weui-cell__hd">
+            <span class="hb-ico pay-wait"></span>
+          </div>
+          <div class="weui-cell__bd">
+            <div class="fs30">订单状态：<span class="ci">{{getOrderStatusText(payOrderInfo.status)}}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel bor-b20">
+        <div class="weui-panel__hd">订单信息</div>
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><div><span class="tit">订单号</span>{{orderNo}}</div></div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><div><span class="tit">下单时间</span>{{payOrderInfo.createTime}}<!--2017-12-12<span class="ml10">19:23:23</span>--></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel bor-b20">
+        <div class="weui-panel__hd">培训内容</div>
+        <div class="weui-panel__bd">
+          <div class="hb-media-box"
+               v-if="index == 0 || (index>=1 && isOpenMoreContent && isShowMoreTrainingContent)"
+               v-for="(item,index) in payOrderInfo.subOrderList">
+            <div class="hb-media-box-hd">
+              <img class="hb-media-box-thumb" :src="item.photoPath" />
+            </div>
+            <div class="hb-media-box-bd">
+              <div class="hb-media-box-title">{{item.skuName}}</div>
+              <div class="hb-media-box-desc">年度：{{getSkuValueName(item.skuPropertyNameList, '年度')}}年</div>
+              <div class="hb-media-box-desc">科目：{{getSkuValueName(item.skuPropertyNameList, '科目')}}</div>
+              <div class="hb-media-box-desc">学时：{{item.trainingPeriod}}</div>
+            </div>
+            <div class="price">￥<span class="num">{{item.originalPrice}}</span></div>
+          </div>
+        </div>
+        <div class="weui-cells"
+             v-if="isShowMoreTrainingContent && !isOpenMoreContent"
+             @click='changeIsOpenMoreContentAction'>
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd"></div>
+            <div class="weui-cell__ft weui-cell__ft-1">查看更多</div>
+          </div>
+        </div>
+        <div class="weui-cells"
+             v-if="isShowMoreTrainingContent && isOpenMoreContent"
+             @click='changeIsOpenMoreContentAction'>
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd"></div>
+            <div class="weui-cell__ft weui-cell__ft-2">收起</div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel bor-b20">
+        <div class="bor-t sum-bar tr">本订单需支付<span class="ci ml10">￥{{priceChangetoDecimal2(payOrderInfo.totalAmount)}}</span></div>
+      </div>
+      <div class="weui-panel hb-panel">
+        <div class="weui-panel__hd">支付方式</div>
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd"><img class="hb-pay-img" src="../../../../design/images/icon-pay-wx.jpg" /></div>
+            <div class="weui-cell__ft">
+              <div class="hb-form">
+                <!--<img class="img" src="../../../../design/images/radio.png" alt=" " />-->
+                <img class="img" src="../../../../design/images/radio-checked.png" alt=" " />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hb-tabbar">
+      <div class="hb-btn hb-btn-3" @click="paidOrder">确认支付</div>
+    </div>
+  </div>
+
+
+</template>
+
+<style lang="less">
+  @import "../../../../design/styles/webstyle.less";
+</style>
+
+<script>
+  import * as storeTypes from '@/store/types'
+  import utils from '@/common/util/Utils'
+  import constant from '@/global/constants/AppConstant'
+
+  export default {
+    components: {},
+    data () {
+      return {
+        orderNo: '',
+        isShowMoreTrainingContent: false,
+        payOrderInfo: {},
+        isPaying: false,
+        isOpenMoreContent: false,
+        payType: 'WECHAT',
+        btnIsEnable: true,
+        payAccountId: ''
+      }
+    },
+    computed: {},
+    mounted () {
+      let orderNo = this.$route.query.orderNo
+      if (orderNo.length) {
+        this.orderNo = orderNo
+        this.loadOrderInfomationData()
+      } else {
+        this.toast('订单号不存在，请确认订单后重新进入！')
+        this.$router.go(-1)
+      }
+    },
+    methods: {
+      priceChangetoDecimal2: function (x) {
+        if (x === undefined) {
+          return '0.00'
+        }
+        var f
+        f = parseFloat(x)
+        if (isNaN(f)) {
+          return false
+        }
+        f = Math.round(x * 100) / 100
+        var s = f.toString()
+        var rs = s.indexOf('.')
+        if (rs < 0) {
+          rs = s.length
+          s += '.'
+        }
+        while (s.length <= rs + 2) {
+          s += '0'
+        }
+        return s
+      },
+      getOrderStatusText: function (status) {
+        switch (status) {
+          case 1: {
+            return '未支付'
+          }
+          case 2: {
+            return '未支付'
+          }
+          case 3: {
+            return '开通中'
+          }
+          case 4: {
+            return '开通中'
+          }
+          case 5: {
+            return '开通中'
+          }
+          case 6: {
+            return '交易成功'
+          }
+          case 7: {
+            return '交易关闭'
+          }
+          case 8: {
+            return '支付中'
+          }
+        }
+      },
+      /**
+       * 加载订单支付信息
+       */
+      loadOrderInfomationData () {
+        let params = {
+          orderNo: this.orderNo,
+          paymentChannel: 'WECHAT_MINI_PROGRAMS'
+        }
+        this.$vux.loading.show({
+          text: '加载中'
+        })
+        var type = 'get'
+        var url = constant.apiUrl.createOrderModule.orderPayOrderInfo
+        utils.getAjaxData(type, params, url).then(res => {
+          this.$vux.loading.hide()
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            this.payOrderInfo = res.data
+            if (res.data.paymentAccountList !== undefined && res.data.paymentAccountList.length) {
+              this.payAccountId = res.data.paymentAccountList[0].payAccountId
+            }
+            if (res.data.subOrderList !== undefined && res.data.subOrderList.length) {
+              if (res.data.subOrderList.length >= 2) {
+                this.isShowMoreTrainingContent = true
+              }
+            }
+          }
+        }).catch(e => {
+          console.log(e)
+          this.$vux.loading.hide()
+          return this.toast('请求失败')
+        })
+      },
+      // =====================================触发事件=====================================
+      paidOrder() {
+        if (!this.payType) {
+          this.toast('请选择支付方式')
+          return
+        }
+        // 未初始化
+        if (typeof window.WeixinJSBridge === 'undefined') {
+          if (window.document.addEventListener) {
+            window.document.addEventListener('WeixinJSBridgeReady', this.onBridgeReady, false)
+          } else if (window.document.attachEvent) {
+            window.attachEvent('WeixinJSBridgeReady', this.onBridgeReady)
+            window.attachEvent('onWeixinJSBridgeReady', this.onBridgeReady)
+          }
+        } else {
+          this.payAction()
+        }
+      },
+      payAction() {
+        if (this.btnIsEnable === false) return
+        let that = this;
+        this.$vux.confirm.show({
+          title: '提示',
+          content: '是否确认付款？请核对订单信息正确',
+          confirmText: '继续支付',
+          onShow() {
+            console.log('plugin show')
+          },
+          onHide() {
+            console.log('plugin hide')
+          },
+          onCancel() {
+            console.log('plugin cancel')
+          },
+          onConfirm() {
+            that.btnIsEnable = false
+            var productName = that.getProductName()
+            // var openId = 'oxbS9tynHiUyS6oxZSYKsaMfPvnU' 会计openId
+            // var openId = 'oRacG03SEY7gPxJYpXnDpJdP7EHM' // 华博openId
+            // var openId = 'oRacG03syU52NwLpCwXjuiD2q76I' // 佳斌openId
+            var openId = that.getCookie(constant.cookie.openId)
+            // var openId = window.localStorage.getItem(AppConstant.localStorage.openId)
+            that.$vux.loading.show({
+              text: '正在请求支付信息......'
+            })
+            that.$store.dispatch(storeTypes.ORDER_GET_ORDER_PAY_INFO, {
+              orderNo: that.orderNo,
+//              payTypeId: that.payType,
+              payAccountId: that.payAccountId,
+              productName: productName,
+              payMoney: that.payOrderInfo.totalAmount,
+              openId: openId
+            }).then(data => {
+              console.log(111);
+              that.btnIsEnable = true
+              that.$vux.loading.hide()
+              if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+                console.log('wxPay:' + data.data.url)
+                var jsonObj = JSON.parse(data.data.url)
+                console.log(jsonObj)
+                // 初始化好
+                var param = {
+                  appId: jsonObj.appId,
+                  timeStamp: jsonObj.timeStamp,
+                  nonceStr: jsonObj.nonceStr,
+                  package: jsonObj.package,
+                  signType: jsonObj.signType,
+                  paySign: jsonObj.paySign
+                }
+                that.toast('准备进行微信支付.....')
+                window.WeixinJSBridge.invoke('getBrandWCPayRequest', param, function(res) {
+                  console.log(res);
+                  //                window.alert(res.err_msg + '/' + AppConstant.wx.success)
+                  if (res.err_msg === 'get_brand_wcpay_request:ok') {
+                    that.toast('支付成功')
+                    that.replace({ path: '/orderPaidSuccess', query: { order: that.order } })
+                  } else if (res.err_msg === 'get_brand_wcpay_request:fail') {
+                    that.toast(res)
+                  } else {
+                    that.toast('支付取消')
+                  }
+                })
+              } else {
+                that.toast(data.head.message)
+              }
+            }).then(e => {
+              // this.hideLoading()
+              that.$vux.loading.hide()
+              that.btnIsEnable = true
+              console.log(JSON.stringify(e))
+            })
+          }
+        })
+      },
+      /**
+       * 发起支付请求事件
+       */
+//      confirmPayAction () {
+//        // 取到paysign，发起支付请求
+//        if (this.data.isPaying) {
+//          return
+//        }
+//        let context = this
+//        let openId = wx.getStorageSync('openId')
+//        let params = {
+//          orderNo: this.data.payOrderInfo.orderNo,
+//          payAccountId: this.data.payOrderInfo.paymentAccountList[0].payAccountId,
+//          productName: this.getProductName(),
+//          payMoney: this.data.payOrderInfo.totalAmount,
+//          openId: openId
+//        }
+//        wx.showLoading({
+//          title: '支付请求中...',
+//          mask: true
+//        })
+//        this.setData({
+//          isPaying: true
+//        })
+//        app.requestData(app.config.orderWeiXinPay, params, 'POST').then(function (response) {
+//          wx.hideLoading()
+//          context.setData({
+//            isPaying: false
+//          })
+//          if (response.head.code == app.constant.network_result_success) {
+//            console.log('wxPay:' + response.data.url)
+//            if (response.data.url !== undefined && response.data.url.length) {
+//              // TODO 转换数据
+//              debugger
+//              let jsonObj = JSON.parse(response.data.url)
+//              context.callUpWeixinPayAction(jsonObj)
+//            } else {
+//              wx.showToast({
+//                title: '微信支付调起失败，请重新尝试！',
+//                icon: 'none'
+//              })
+//            }
+//          } else {
+//            wx.showToast({
+//              title: response.head.message,
+//              icon: 'none'
+//            })
+//          }
+//        }).catch(function (error) {
+//          debugger
+//          wx.hideLoading()
+//          context.setData({
+//            isPaying: false
+//          })
+//          wx.showToast({
+//            title: '支付请求失败，请重新尝试!',
+//            icon: 'none'
+//          })
+//        })
+//      },
+      /**
+       * 调用微信支付事件
+       */
+//      callUpWeixinPayAction (weixinPayInfo) {
+//        let context = this
+//        wx.requestPayment({
+//          'timeStamp': weixinPayInfo.timeStamp,
+//          'nonceStr': weixinPayInfo.nonceStr,
+//          'package': weixinPayInfo.package,
+//          'signType': 'MD5',
+//          'paySign': weixinPayInfo.paySign,
+//          'success': function (res) {
+//            wx.redirectTo({
+//              url: '/pages/order/orderPaySuccess/orderPaySuccess?orderInfo=' + JSON.stringify(context.data.payOrderInfo),
+//            })
+//          },
+//          'fail': function (res) {
+//            wx.showToast({
+//              title: '支付失败，请重新支付！',
+//              icon: 'none'
+//            })
+//          }
+//        })
+//      },
+      // =====================================工具事件=====================================
+      /**
+       * 获取支付商品的名称
+       */
+      getProductName () {
+        var productName = ''
+        if (this.payOrderInfo.subOrderList.length > 0) {
+          for (var i = 0; i < this.payOrderInfo.subOrderList.length; i++) {
+            productName = productName + '|' + this.payOrderInfo.subOrderList[i].skuName
+          }
+          return productName
+        } else {
+          return productName
+        }
+      },
+      changeIsOpenMoreContentAction () {
+        this.isOpenMoreContent = !this.isOpenMoreContent
+      },
+      getSkuValueName: function (skuArr, skuName) {
+        if (!skuArr) {
+          return ''
+        }
+        var str = ''
+        skuArr.forEach(function (item) {
+          if (item.skuPropertyName === skuName) {
+            str = item.skuPropertyValueName
+          }
+        })
+        return str
+      }
+    },
+    destroyed: function () {
+    }
+  }
+</script>

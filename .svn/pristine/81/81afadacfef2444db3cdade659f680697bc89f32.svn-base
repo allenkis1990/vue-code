@@ -1,0 +1,147 @@
+<template>
+  <div style="height:100%;">
+    <drawer
+      width="180px;"
+      :show.sync="$store.state.drawerVisibility"
+      :show-mode="showModeValue"
+      :placement="showPlacementValue"
+      :drawer-style="{'background-color':'#38373d', width: '180px'}">
+      <div slot="drawer">
+        <div class="hb-popover">
+          <div class="popover-bd">
+            <!--/登录-->
+            <div class="user-img-box">
+              <img class="user-img" :src="imgUserHeader" @click="gotoPage('/demo/mine')">
+              <a href="javascript:;" class="weui-btn weui-btn_mini weui-btn_default hd-btn"
+                 v-if="!$store.getters.hasLogin" @click="loginEvent">登 录</a>
+            </div>
+            <!--/登录-->
+            <div class="hb-menu-box">
+              <a href="javascript:void(0);" :class="[itemStyle('/demo/home')]" @click="gotoPage('/demo/home')">
+                <span class="hb-ico ico-home"></span>首页
+              </a>
+              <a href="javascript:void(0);" :class="[itemStyle('/demo/orderList')]"
+                 @click="gotoPage('/demo/orderList')">
+                <span class="hb-ico ico-list"></span>报名清单
+              </a>
+              <!-- <a href="javascript:void(0);" :class="[itemStyle('/demo/cerList')]" @click="gotoPage('/demo/cerList')">
+                <span class="hb-ico ico-prove"></span>培训证明
+              </a> -->
+              <!-- V1.0.0修复版本隐藏 -->
+              <!-- <a href="javascript:void(0);" :class="[itemStyle('/demo/myClass')]" @click="gotoPage('/demo/myClass')">
+                <span class="hb-ico ico-class"></span>我的班级
+              </a> -->
+              <!-- <a href="javascript:void(0);" :class="[itemStyle()]" @click="openApp()">
+                <span class="hb-ico ico-app"></span>APP学习
+              </a>
+              <a href="javascript:void(0);" class="menu-items" @click="exitAppEvent()">
+                <span class="hb-ico ico-exit"></span>退出登录
+              </a> -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <transition
+        @after-enter="$vux.bus && $vux.bus.$emit('vux:after-view-enter')"
+        :name="'vux-pop-' + (direction === 'forward' ? 'in' : 'out')">
+        <router-view class="router-view"></router-view>
+      </transition>
+    </drawer>
+  </div>
+</template>
+
+<style lang="less">
+  @import "../../design/styles/webstyle.less";
+</style>
+
+<script>
+  import * as storeTypes from '../store/types'
+  //  import AppUtil from '../common/util/AppUtil'
+  import {
+    Group,
+    Cell,
+    Drawer
+  } from 'vux'
+  import AppConstant from '../global/constants/AppConstant'
+
+  export default {
+    data () {
+      return {
+        showMenu: false,
+        showMode: 'push',
+        showModeValue: 'push',
+        showPlacement: 'left',
+        showPlacementValue: 'left',
+        ringhtOptionShowMore: false,
+        direction: this.$store.state.direction,
+//        imgUserHeader: this.$store.state.accountModule.userInfo.displayPhotoUrl === undefined ? this.$store.state.accountModule.userInfo.displayPhotoUrl : require('../../design/images/default-user-img.jpg'),
+        userInfo: this.$store.state.accountModule.userInfo
+      }
+    },
+    computed: {
+      imgUserHeader () {
+        let user = this.$store.getters.userInfo
+        if (user !== undefined && user !== null) {
+          if (user.displayPhotoUrl !== undefined && user.displayPhotoUrl.trim() !== '') {
+            return user.displayPhotoUrl
+          }
+        }
+        return require('../../design/images/default-user-img.jpg')
+      }
+    },
+    components: {
+      Group,
+      Cell,
+      Drawer
+    },
+    methods: {
+      /**
+       * 侧滑隐藏事件
+       */
+      drawerVisibilityEvent () {
+        this.$store.commit(storeTypes.GLOBAL_SET_DRAWER, false)
+      },
+      /**
+       * 菜单点击跳转事件
+       * @param path
+       */
+      gotoPage (path) {
+        this.drawerVisibilityEvent()
+        this.$router.push(path)
+      },
+      /**
+       * 登录事件
+       */
+      loginEvent () {
+        this.push('/login')
+      },
+      /**
+       * 退出事件
+       */
+      exitAppEvent () {
+        this.$store.dispatch(storeTypes.ACCIYBT_EXIT, '').then(data => {
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.removeCookie(AppConstant.cookie.beforeLoginUrl)
+            this.drawerVisibilityEvent()
+            this.replace(this.pages.Login)
+          }
+        }).catch(e => {
+          console.log(e)
+        })
+      },
+      itemStyle (path) {
+        if (this.$route.path === path) {
+          return ['menu-items', 'current']
+        } else {
+          return ['menu-items']
+        }
+      },
+      openApp () {
+        // 此方法后续需要放到util模块中
+//        AppUtil.openApp()
+        this.toast('程序猿挖矿中...')
+      }
+    }
+  }
+</script>
+
