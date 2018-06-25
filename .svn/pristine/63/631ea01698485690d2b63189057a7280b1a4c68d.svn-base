@@ -1,0 +1,295 @@
+<template>
+<div class="contain hb-box">
+    <div v-if="completeThisOrder" class="js_dialog" id="iosDialog1" style="opacity: 1;">
+      <div class="weui-mask"></div>
+      <div class="weui-dialog">
+        <div class="weui-dialog__bd">
+          <i class="weui-icon-success weui-icon_msg"></i>
+          <p class="mt20">完善信息成功！</p>
+        </div>
+        <div class="weui-dialog__ft">
+          <div @click="gotoNextNeedCompleteOrder" class="weui-dialog__btn weui-dialog__btn_primary">完善下一笔订单</div>
+        </div>
+      </div>
+    </div>
+    <div v-if="completeAllOrders" class="js_dialog" id="iosDialog1" style="opacity: 1;">
+      <div class="weui-mask"></div>
+      <div class="weui-dialog">
+        <div class="weui-dialog__bd">
+          <i class="weui-icon-success weui-icon_msg"></i>
+          <p class="mt20">完善信息成功！</p>
+        </div>
+      </div>
+    </div>
+    <div class="hb-box-bd">
+      <div class="weui-panel hb-panel bor-b20" v-for="(item,index) in orderDetailInfo.subOrderList" :key="index">
+        <div class="weui-panel__hd">培训内容</div>
+        <div class="weui-panel__bd">
+          <div class="hb-media-box">
+            <div class="hb-media-box-hd">
+              <img class="hb-media-box-thumb" :src="item.photoPath" />
+            </div>
+            <div class="hb-media-box-bd">
+              <div class="hb-media-box-title">{{item.skuName}}</div>
+              <div class="hb-media-box-desc">年度：{{getTrainingYear(item)}}年</div>
+              <div class="hb-media-box-desc">科目：{{getTrainingType(item)}}</div>
+              <div class="hb-media-box-desc">学时：{{item.trainingPeriod}}</div>
+            </div>
+            <div class="price">￥<span class="num">{{item.totalAmount}}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel bor-b20" v-if="isShowInvoiceInfo(orderDetailInfo.totalAmount, configSetting.type)">
+        <div class="weui-panel__hd">发票</div>
+        <div class="weui-cells">
+          <div class="weui-cell" @click="changeIsNeedInvoiceAction">
+            <div class="weui-cell__bd">
+              <div>索要发票</div>
+            </div>
+            <div class="weui-cell__ft hb-form-box">
+              <div class="hb-form">
+                <!--<img class="img" src="../images/radio.png" alt=" " />-->
+                 <img class="img"
+                     v-if="!isNeedInvoice"
+                     src="../../../../design/images/radio.png" alt=" "/>
+                <img class="img"
+                     v-if="isNeedInvoice"
+                     src="../../../../design/images/radio-checked.png" alt=" "/>
+              </div>
+            </div>
+          </div>
+          <div class="weui-cell weui-cell_access" v-if="isNeedInvoice"
+               @click='chooseInvoiceTypeAction'>
+            <div class="weui-cell__bd" >
+              <div class="to"><span class="tit">发票</span>{{$store.state.orderModule.showInvoiceTypeText}}</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+          <div class="weui-cell weui-cell_access" @click="chooseInvoiceSendModeAction"
+               v-if="isNeedInvoice && isShowInvoiceSendCell($store.state.orderModule.invoiceInfo.invoiceType)">
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">发票配送</span>{{$store.state.orderModule.showInvoiceSendText}}</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hb-tabbar">
+      <div class="hb-btn hb-btn-3" @click="completeOrder">提交配送信息</div>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+</style>
+
+<script>
+import { Group, Radio } from 'vux'
+import * as storeTypes from '../../../store/types'
+export default {
+  components: { Radio, Group },
+  data () {
+    return {
+      currentOrderIndex: 0,
+      needCompleteOrderList: [],
+      orderArray: this.$store.state.orderModule.needCompleteOrderList,
+      path: this.$route.query.path,
+      orderDetailInfo: {},
+      configSetting: {},
+      invoiceInfo: this.$store.state.orderModule.invoiceInfo,
+      // certificateSendInfo: this.$store.state.orderModule.
+      isNeedInvoice: false,
+      completeThisOrder: false,
+      completeAllOrders: false
+    }
+  },
+  methods: {
+    isShowInvoiceInfo (totolPrice, canSendType) {
+      if (totolPrice !== undefined && totolPrice !== 0 && canSendType !== undefined && (canSendType === 1 || canSendType === 4)) {
+        return true
+      }
+      return false
+    },
+    isShowInvoiceSendCell (invoiceType) {
+      if (invoiceType !== undefined && invoiceType === 2) {
+        return false
+      }
+      return true
+    },
+    changeIsNeedInvoiceAction () {
+      if (this.configSetting.provideType === 2) {
+        return
+      }
+      this.isNeedInvoice = !this.isNeedInvoice
+    },
+    chooseInvoiceSendModeAction () {
+      var that = this
+      this.$router.push({
+        path: '/configInvoiceDeliver',
+        query: {
+          invoiceInfo: JSON.stringify(this.invoiceInfo),
+          supportDeliveryType: JSON.stringify(that.configSetting.supportInvoiceDeliveryType)
+        }
+      })
+    },
+    chooseInvoiceTypeAction () {
+      var that = this
+      this.$router.push({
+        path: '/configInvoiceInfo',
+        query: {
+          invoiceInfo: JSON.stringify(this.invoiceInfo),
+          supportInvoiceType: JSON.stringify(that.configSetting.supportInvoiceType),
+          supportTitleType: JSON.stringify(that.configSetting.supportTitleType)
+        }
+      })
+    },
+    getTrainingYear (item) {
+      if (item.skuPropertyNameList) {
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '年度') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    getTrainingType (item) {
+      if (item.skuPropertyNameList) {
+        for (var i = 0; i < item.skuPropertyNameList.length; i++) {
+          if (item.skuPropertyNameList[i].skuPropertyName === '科目') {
+            return item.skuPropertyNameList[i].skuPropertyValueName
+          }
+        }
+      }
+    },
+    requestConfigSetting () {
+      this.showLoading('加载中...')
+      let index = this.currentOrderIndex
+      let orderItem = this.orderArray[index]
+      let params = {
+        paymentChannel: orderItem.paymentChannel
+      }
+      this.$store.dispatch(storeTypes.ORDER_GET_COMPLETE_CONFIG_SETTING, params)
+        .then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.configSetting = data.data
+            if (data.data.provideType === 2) {
+              this.isNeedInvoice = true
+            }
+          } else {
+            console.log(JSON.stringify(data))
+            this.toast(data.head.message)
+          }
+        })
+        .then(e => {
+          this.hideLoading()
+        })
+    },
+    requestOrderInfo: function () {
+      let index = this.currentOrderIndex
+      let orderItem = this.orderArray[index]
+      let params = {
+        orderNo: orderItem.orderNo
+      }
+      // 获取订单详情
+      this.$store.dispatch(storeTypes.ORDER_GET_ORDER_DETAIL, params)
+        .then(data => {
+          this.hideLoading()
+          if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+            console.log(data.data)
+            this.orderDetailInfo = data.data
+          } else {
+            console.log(JSON.stringify(data))
+          }
+        })
+        .then(e => {
+          this.hideLoading()
+        })
+    },
+    checkInfoCorrent: function () {
+      if (this.orderDetailInfo.totalAmount !== 0) {
+        switch (this.configSetting.type) {
+          case 1: {
+            if (this.isNeedInvoice) {
+              if (this.invoiceInfo.invoiceType === undefined) {
+                this.toast('请填写发票信息！')
+                return false
+              }
+              if (this.invoiceInfo.invoiceType === 2) {
+                return true
+              } else {
+                if (this.invoiceInfo.deliverType === undefined) {
+                  this.toast('请完善发票配送信息！')
+                  return false
+                }
+              }
+            } else {
+              return true
+            }
+            break
+          }
+        }
+      }
+      return true
+    },
+    completeOrder () {
+      if (this.checkInfoCorrent()) {
+        let params = {
+          orderNo: this.orderDetailInfo.orderNo
+        }
+        params.deliverInfo = {}
+        if (this.orderDetailInfo.totalAmount === 0) {
+          this.invoiceInfo.needInvoice = false
+          params.deliverInfo.invoiceInfo = this.invoiceInfo
+        } else {
+          this.invoiceInfo.needInvoice = this.isNeedInvoice
+          params.deliverInfo.invoiceInfo = this.invoiceInfo
+        }
+        this.submitOrder(params)
+      }
+    },
+    submitOrder (params) {
+      this.$store.dispatch(storeTypes.ORDER_COMPLETE_ORDER, params).then((data) => {
+        if (data.head.code === storeTypes.NETWORK_RESULT_SUCCESS) {
+          this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+          this.$store.dispatch(storeTypes.ORDER_INVOICE_TEXT, '')
+          this.$store.dispatch(storeTypes.ORDER_INVOICE_DER_TEXT, '')
+          if (this.currentOrderIndex + 1 !== this.orderArray.length) {
+            // 完善一笔订单成功，还有其他订单要完善
+            ++this.currentOrderIndex
+            this.completeThisOrder = true
+          } else {
+            this.completeAllOrders = true
+            setTimeout(() => {
+              this.replace(this.path)
+            }, 1000)
+          }
+        }
+      })
+    },
+    gotoNextNeedCompleteOrder () {
+      this.requestConfigSetting()
+      this.requestOrderInfo()
+      this.completeThisOrder = false
+    }
+  },
+  mounted () {
+    // 从哪个页面进来完善信息的 用于全部完善完信息后回到页面
+    this.requestConfigSetting()
+    this.requestOrderInfo()
+    if (this.invoiceInfo.invoiceType) {
+      this.isNeedInvoice = true
+    }
+  },
+  beforeRouteLeave (to, from, next) {
+    let { path } = to
+    if (path !== '/configInvoiceInfo' && path !== '/configInvoiceDeliver') {
+      this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+      this.$store.dispatch(storeTypes.ORDER_INVOICE_TEXT, '请选择发票类型')
+      this.$store.dispatch(storeTypes.ORDER_INVOICE_DER_TEXT, '请选择配送方式')
+    }
+    next()
+  }
+}
+</script>

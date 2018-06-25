@@ -1,0 +1,573 @@
+<template>
+  <!--发票-->
+  <div class="contain hb-box">
+    <div class="hb-box-bd">
+      <div class="weui-panel hb-panel bor-b20">
+        <div class="weui-panel__hd">开票方式</div>
+        <div class="weui-cells">
+          <div class="weui-cell pbr0">
+            <div class="weui-cell__bd">
+              <div class="hb-btn-s w1"
+                   @click="invoiceTypeItemClickAction(item)"
+                   :class="{'current':item.invoiceTypeValue === selectedInvoiceType}"
+                   v-for="(item,index) in invoiceTypeItemsArray">{{item.invoiceTypeTitle}}</div>
+            </div>
+          </div>
+          <div class="p20 fs26 c9" v-if="selectedInvoiceType ===1">纸质发票开出以后，我们将会以快递的形式将发票寄送到您制定的地址<span class="ci">（快递费到付）</span></div>
+          <div class="p20 fs26 c9" v-if="selectedInvoiceType ===2">电子发票即增值税普通发票的电子版本，可支持报销入账，其法律效力、基本用途及使用规定和纸质发票相同。</div>
+          <div class="p20 fs26 c9" v-if="selectedInvoiceType ===3">我公司依法开具发票，请您按照税法规定使用发票。</div>
+          <div class="p20 fs26 c9" v-if="selectedInvoiceType ===4">非税务票是财政投放的票据，行政事业单位收取行政事业性收费开具的票据，是正式票据，可以作为报销凭证。</div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel bor-b20" v-if="selectedInvoiceType ==1 || selectedInvoiceType ==2 || selectedInvoiceType ==4">
+        <div class="weui-panel__hd">发票抬头</div>
+        <div class="weui-cells">
+          <div class="weui-cell"
+               v-for="(item,index) in invoiceTitleTypeItemsArray"
+               @click='chooseInvoiceTitleTypeAction(item)'>
+            <div class="weui-cell__bd flex">
+              <div class="hb-form">
+                <img class="img"
+                     v-if="selectedInvoiceTitleType !== item.invoiceTitleTypeValue"
+                     src="../../../../design/images/radio.png" alt=" "/>
+                <img class="img"
+                     v-if="selectedInvoiceTitleType === item.invoiceTitleTypeValue"
+                     src="../../../../design/images/radio-checked.png" alt=" " />
+              </div>
+              <div class="ml20">{{item.invoiceTitleTypeTitle}}</div>
+            </div>
+          </div>
+          <!--<div class="weui-cell">
+            <div class="weui-cell__bd flex">
+              <div class="hb-form">
+                &lt;!&ndash;<img class="img" src="../../../../design/images/radio.png" alt=" " />&ndash;&gt;
+                <img class="img" src="../../../../design/images/radio-checked.png" alt=" "/>
+              </div>
+              <div class="ml20">单位</div>
+            </div>
+          </div>-->
+        </div>
+      </div>
+
+      <!--个人-->
+      <div class="weui-panel hb-panel bor-b20"
+           v-show="(selectedInvoiceTitleType ==1 && (selectedInvoiceType ==1 || selectedInvoiceType == 2 || selectedInvoiceType == 4))">
+        <div class="weui-cells weui-cells_form">
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>个人姓名</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="personName"
+                     type="text"
+                     placeholder="请填写个人姓名"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--/个人-->
+      <!--单位-->
+      <div class="weui-panel hb-panel" v-show="(selectedInvoiceTitleType ==2 && (selectedInvoiceType ==1 || selectedInvoiceType == 2 || selectedInvoiceType == 4))">
+        <div class="weui-cells weui-cells_form">
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>单位全称</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="unitName"
+                     type="text"
+                     placeholder="请填写单位名称"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>纳税人识别号</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="taxNumber"
+                     type="text"
+                     placeholder="请填写纳税人识别号"/>
+            </div>
+          </div>
+        </div>
+        <div class="c9 fs26 p20" v-show='!(selectedInvoiceType == 4)'>按照国税总局公告，自2017年7月1日起，企业索取的增值税发票需填写纳税人识别号，不符合规定的发票，不得作为合法的税收凭证。</div>
+      </div>
+      <!--/单位-->
+      <!--增票资质-->
+      <div class="weui-panel hb-panel" v-show="selectedInvoiceType == 3">
+        <div class="weui-panel__hd">增票资质</div>
+        <div class="weui-cells weui-cells_form">
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>单位全称</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.unitName"
+                     type="text"
+                     placeholder="请填写单位全称"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>纳税人识别号</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.taxpayerNo"
+                     type="text"
+                     placeholder="请填写纳税人识别号"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>注册地址</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.registerAddress"
+                     type="text"
+                     placeholder="请填写注册地址"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>注册电话</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.registerTelNumber"
+                     type="text"
+                     placeholder="请填写注册电话"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>开户银行</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.bankTitle"
+                     type="text"
+                     placeholder="请填写开户银行"/>
+            </div>
+          </div>
+          <div class="weui-cell">
+            <div class="weui-cell__hd">
+              <div class="weui-label"><span class="star">*</span>银行账号</div>
+            </div>
+            <div class="weui-cell__bd">
+              <input class="weui-input"
+                     v-model="incrementInvoiceInfo.bankAccount"
+                     type="text"
+                     placeholder="请填写银行账号"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--/增票资质-->
+    </div>
+
+    <div class="hb-tabbar">
+      <div class="hb-btn hb-btn-3" @click="saveInvoiceInfo">保 存</div>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+  @import "../../../../design/styles/webstyle.less";
+</style>
+
+<script>
+  //  import { cookie } from 'vux'
+//  import * as storeTypes from '@/store/types'
+  //  import utils from '@/common/util/Utils'
+  //  import constant from '@/global/constants/AppConstant'
+
+  export default {
+    components: {},
+    data () {
+      return {
+        // 支持的开票方式 | Int | 发票类型 | 1.普通发票 2.普通电子发票 3.增值税专用发票 | 4.非税务票（纸质）
+        supportInvoiceTypeArray: [],
+        // 支持的开票抬头方式 | Int | 发票类型 | 1.个人 2.单位
+        supportInvoiceTitleTypeArray: [],
+        // 开票方式数组
+        invoiceTypeItemsArray: [],
+        // 开票抬头方式数组
+        invoiceTitleTypeItemsArray: [],
+        // 选中的发票抬头类型 1为个人，2为单位
+        selectedInvoiceTitleType: -1,
+        // 选中的开票方式：1 普通纸质发票 2 普通电子发票 3 增值税专用发票 4非税务票
+        selectedInvoiceType: -1,
+        deliverInfo: {},
+        invoiceInfo: {},
+        cerInfo: {},
+        incrementInvoiceInfo: {
+          unitName: '',
+          taxpayerNo: '',
+          registerAddress: '',
+          registerTelNumber: '',
+          bankAccount: '',
+          bankTitle: ''
+        },
+        personName: '',
+        unitName: '',
+        taxNumber: '',
+        preInvoiceInfo: {}
+      }
+    },
+    computed: {},
+    mounted () {
+      var options = this.$route.query
+      console.log(options, '传过来的参数')
+//      初始化数据
+      let supportInvoiceTypeArray = JSON.parse(options.supportInvoiceType)
+      if (supportInvoiceTypeArray !== undefined && supportInvoiceTypeArray.length) {
+        supportInvoiceTypeArray = this.refundArraySort(supportInvoiceTypeArray)
+        this.supportInvoiceTypeArray = supportInvoiceTypeArray
+      }
+      let supportTitleTypeArray = JSON.parse(options.supportTitleType)
+      if (supportTitleTypeArray !== undefined && supportTitleTypeArray.length) {
+        supportTitleTypeArray = this.refundArraySort(supportTitleTypeArray)
+        this.supportInvoiceTitleTypeArray = supportTitleTypeArray
+      }
+      if (options.invoiceTitle !== undefined) {
+        this.invoiceTitle = options.invoiceTitle
+      }
+      // 与设置上个页面传递的参数存在先后顺序，不可互换
+      this.getInvioceTitleTypeArray()
+      this.getSelectedInvoiceTitleType()
+      this.getInvoiceTypeArray()
+      this.getSelectedInvoiceType()
+      // 设置上个页面传递的参数
+      let invoiceInfo = JSON.parse(options.invoiceInfo)
+      if (invoiceInfo.invoiceType !== undefined) {
+        this.selectedInvoiceType = invoiceInfo.invoiceType
+        this.preInvoiceInfo = invoiceInfo
+        if (invoiceInfo.invoiceType === 1 || invoiceInfo.invoiceType === 2 || invoiceInfo.invoiceType === 4) {
+          this.selectedInvoiceTitleType = invoiceInfo.titleType
+        }
+        if (invoiceInfo.invoiceType === 1 || invoiceInfo.invoiceType === 2) {
+          if (invoiceInfo.titleType === 1) {
+            this.personName = invoiceInfo.title
+          } else if (invoiceInfo.titleType === 2) {
+            this.unitName = invoiceInfo.title
+            this.taxNumber = invoiceInfo.taxpayerNo
+          }
+        }
+        if (invoiceInfo.invoiceType === 3) {
+          this.incrementInvoiceInfo = invoiceInfo.increasedTicket
+        }
+        if (invoiceInfo.invoiceType === 4) {
+          if (invoiceInfo.titleType === 1) {
+            this.personName = invoiceInfo.title
+          } else if (invoiceInfo.titleType === 2) {
+            this.unitName = invoiceInfo.title
+          }
+        }
+      }
+    },
+    methods: {
+      refundArraySort: function (array) {
+        // 冒泡排序
+        var len = array.length
+        for (var i = 0; i < len; i++) {
+          for (var j = 0; j < len - 1 - i; j++) {
+            if (parseInt(array[j]) > parseInt(array[j + 1])) {
+              var temp = array[j]
+              array[j] = array[j + 1]
+              array[j + 1] = temp
+            }
+          }
+        }
+        return array
+      },
+      getInvioceTitleTypeArray () {
+        if (!this.supportInvoiceTitleTypeArray.length) {
+          return
+        }
+        let invoiceTitleTypeItemsArray = []
+        for (let index = 0; index < this.supportInvoiceTitleTypeArray.length; index++) {
+          let item = this.supportInvoiceTitleTypeArray[index]
+          switch (item) {
+            case 1: {
+              invoiceTitleTypeItemsArray.push({
+                invoiceTitleTypeTitle: '个人',
+                invoiceTitleTypeValue: 1
+              })
+              break
+            }
+            case 2: {
+              invoiceTitleTypeItemsArray.push({
+                invoiceTitleTypeTitle: '单位',
+                invoiceTitleTypeValue: 2
+              })
+              break
+            }
+          }
+        }
+        this.invoiceTitleTypeItemsArray = invoiceTitleTypeItemsArray
+//        this.setData({
+//          'invoiceTitleTypeItemsArray': invoiceTitleTypeItemsArray
+//        })
+      },
+      getSelectedInvoiceTitleType () {
+        if (this.invoiceTitleTypeItemsArray.length) {
+          let invoiceTitleItem = this.invoiceTitleTypeItemsArray[0]
+          this.selectedInvoiceTitleType = invoiceTitleItem.invoiceTitleTypeValue
+        }
+      },
+      getInvoiceTypeArray () {
+        if (!this.supportInvoiceTypeArray.length) {
+          return
+        }
+        // 1.普通发票 2.普通电子发票 3.增值税专用发票 | 4.非税务票（纸质）
+        let invoiceTypeItemsArray = []
+        for (let index = 0; index < this.supportInvoiceTypeArray.length; index++) {
+          let item = this.supportInvoiceTypeArray[index]
+          switch (item) {
+            case 1: {
+              invoiceTypeItemsArray.push({
+                invoiceTypeTitle: '普通发票',
+                invoiceTypeValue: 1
+              })
+              break
+            }
+            case 2: {
+              invoiceTypeItemsArray.push({
+                invoiceTypeTitle: '普通电子发票',
+                invoiceTypeValue: 2
+              })
+              break
+            }
+            case 3: {
+              invoiceTypeItemsArray.push({
+                invoiceTypeTitle: '增值税专用发票',
+                invoiceTypeValue: 3
+              })
+              break
+            }
+            case 4: {
+              invoiceTypeItemsArray.push({
+                invoiceTypeTitle: '非税务票(纸质)',
+                invoiceTypeValue: 4
+              })
+              break
+            }
+          }
+        }
+        this.invoiceTypeItemsArray = invoiceTypeItemsArray
+//        this.setData({
+//          'invoiceTypeItemsArray': invoiceTypeItemsArray
+//        })
+      },
+      getSelectedInvoiceType () {
+        if (this.invoiceTypeItemsArray.length) {
+          var invoiceItem = this.invoiceTypeItemsArray[0]
+          this.selectedInvoiceType = invoiceItem.invoiceTypeValue
+//          this.setData({
+//            selectedInvoiceType: this.selectedInvoiceType
+//          })
+        }
+      },
+      /**
+       * 选择发票抬头类型事件
+       */
+      chooseInvoiceTitleTypeAction (item) {
+//        let item = event.currentTarget.dataset.item
+        this.selectedInvoiceTitleType = item.invoiceTitleTypeValue
+      },
+      /**
+       * 选择发开票方式事件
+       */
+      invoiceTypeItemClickAction (item) {
+        let currentItem = item
+//        let currentItem = event.currentTarget.dataset.item
+        switch (currentItem.invoiceTypeValue) {
+          case 1: {
+            break
+          }
+          case 2: {
+            break
+          }
+          case 3: {
+            break
+          }
+          case 4: {
+            break
+          }
+        }
+        this.selectedInvoiceType = currentItem.invoiceTypeValue
+      },
+//      inputeAction (event) {
+//        let value = event.detail.value
+//        switch (event.currentTarget.dataset.inputKey) {
+//          case 'personName': {
+//            this.data.personName = value
+//            break
+//          }
+//          case 'unitName': {
+//            this.data.unitName = value
+//            break
+//          }
+//          case 'taxNumber': {
+//            this.data.taxNumber = value
+//            break
+//          }
+//          case 'ZunitName': {
+//            this.data.incrementInvoiceInfo.unitName = value
+//            break
+//          }
+//          case 'ZtaxNumber': {
+//            this.data.incrementInvoiceInfo.taxpayerNo = value
+//            break
+//          }
+//          case 'ZregisterAddress': {
+//            this.data.incrementInvoiceInfo.registerAddress = value
+//            break
+//          }
+//          case 'ZregisterPhoneNumber': {
+//            this.data.incrementInvoiceInfo.registerTelNumber = value
+//            break
+//          }
+//          case 'ZregisterBank': {
+//            this.data.incrementInvoiceInfo.bankTitle = value
+//            break
+//          }
+//          case 'ZbankNumber': {
+//            this.data.incrementInvoiceInfo.bankAccount = value
+//            break
+//          }
+//        }
+//        this.setData({
+//          personName: this.data.personName,
+//          unitName: this.data.unitName,
+//          taxNumber: this.data.taxNumber,
+//          incrementInvoiceInfo: this.data.incrementInvoiceInfo
+//        })
+//      },
+      // 保存发票
+      saveInvoiceInfo: function () {
+        if (this.checkInfoCorrect()) {
+          let showText = ''
+          for (let index = 0; index < this.invoiceTypeItemsArray.length; index++) {
+            let item = this.invoiceTypeItemsArray[index]
+            if (item.invoiceTypeValue === this.selectedInvoiceType) {
+              showText = item.invoiceTypeTitle
+            }
+          }
+          if (this.selectedInvoiceType === 1 || this.selectedInvoiceType === 2 || this.selectedInvoiceType === 4) {
+            if (this.selectedInvoiceTitleType === 1) {
+              showText = showText + '-个人' + '(' + this.personName + ')'
+            } else if (this.selectedInvoiceTitleType === 2) {
+              showText = showText + '-单位' + '(' + this.unitName + ')'
+            }
+          } else if (this.selectedInvoiceType === 3) {
+            showText = showText + '(明细)'
+          }
+//          需要store.state传递的参数
+//          1 showInvoiceTypeText
+//          2 invoiceInfo
+          this.$store.state.orderModule.showInvoiceTypeText = showText
+          this.$store.state.orderModule.invoiceInfo.invoiceType = this.selectedInvoiceType
+          // 修改页面的invoiceInfo
+          if (this.selectedInvoiceType === 1 || this.selectedInvoiceType === 2) {
+            this.$store.state.orderModule.invoiceInfo.titleType = this.selectedInvoiceTitleType
+            if (this.selectedInvoiceTitleType === 1) {
+              this.$store.state.orderModule.invoiceInfo.title = this.personName
+              this.$store.state.orderModule.invoiceInfo.taxpayerNo = ''
+            } else if (this.selectedInvoiceTitleType === 2) {
+              this.$store.state.orderModule.invoiceInfo.title = this.unitName
+              this.$store.state.orderModule.invoiceInfo.taxpayerNo = this.taxNumber
+            }
+          } else if (this.selectedInvoiceType === 3) {
+            this.$store.state.orderModule.invoiceInfo.increasedTicket = this.incrementInvoiceInfo
+          } else if (this.selectedInvoiceType === 4) {
+            this.$store.state.orderModule.invoiceInfo.titleType = this.selectedInvoiceTitleType
+            this.$store.state.orderModule.invoiceInfo.taxpayerNo = ''
+            if (this.selectedInvoiceTitleType === 1) {
+              this.$store.state.orderModule.invoiceInfo.title = this.personName
+            } else if (this.selectedInvoiceTitleType === 2) {
+              this.$store.state.orderModule.invoiceInfo.title = this.unitName
+            }
+          }
+          this.$router.back(-1)
+//          返回下单页面
+//          wx.navigateBack({})
+        }
+      },
+      /**
+       * 校验信息是否正确
+       */
+      checkInfoCorrect () {
+//        1 普通纸质发票 2 普通电子发票 3 增值税专用发票 4非税务票
+        if (this.selectedInvoiceType === 1 || this.selectedInvoiceType === 2) {
+          // 1为个人，2为单位
+          if (this.selectedInvoiceTitleType === 1) {
+            if (!this.personName.trim().length) {
+              this.toast('请填写个人姓名，不可为空！')
+              return false
+            }
+          } else if (this.selectedInvoiceTitleType === 2) {
+            if (!this.unitName.trim().length) {
+              this.toast('请填写单位全称，不可为空！')
+              return false
+            }
+            if (!this.taxNumber.trim().length) {
+              this.toast('请填写纳税人识别号，不可为空！')
+              return false
+            }
+          }
+          return true
+        } else if (this.selectedInvoiceType === 3) {
+          if (!this.incrementInvoiceInfo.unitName.trim().length) {
+            this.toast('请填写单位全称，不可为空！')
+            return false
+          }
+          if (!this.incrementInvoiceInfo.taxpayerNo.trim().length) {
+            this.toast('请填写纳税人识别号，不可为空！')
+            return false
+          }
+          if (!this.incrementInvoiceInfo.registerAddress.trim().length) {
+            this.toast('请填写注册地址，不可为空！')
+            return false
+          }
+          if (!this.incrementInvoiceInfo.registerTelNumber.trim().length) {
+            this.toast('请填写注册电话，不可为空！')
+            return false
+          }
+          if (!this.incrementInvoiceInfo.bankTitle.trim().length) {
+            this.toast('请填写开户银行，不可为空！')
+            return false
+          }
+          if (!this.incrementInvoiceInfo.bankAccount.trim().length) {
+            this.toast('请填写银行账号，不可为空！')
+            return false
+          }
+          return true
+        } else if (this.selectedInvoiceType === 4) {
+          // 1为个人，2为单位
+          if (this.selectedInvoiceTitleType === 1) {
+            if (!this.personName.trim().length) {
+              this.toast('请填写个人姓名，不可为空！')
+              return false
+            }
+          } else if (this.selectedInvoiceTitleType === 2) {
+            if (!this.unitName.trim().length) {
+              this.toast('请填写单位全称，不可为空！')
+              return false
+            }
+          }
+          return true
+        }
+        return false
+      }
+    },
+    destroyed: function () {
+    }
+  }
+</script>
