@@ -1,0 +1,215 @@
+<template>
+  <div class="contain">
+    <div class="hb-form-cells">
+      <div class="tit-box-1">
+        <div class="h1">欢迎注册</div>
+        <div class="fs30 c9 mt5">Welcome to register</div>
+      </div>
+      <div class="weui-cells weui-cells_form">
+        <div class="weui-cell sex" v-if="organList.length > 1">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">培训机构</span></div>
+          <div class="weui-cell__bd" style="font-size:inherit">
+            <div class="arrow"></div>
+            <popup-picker class="gray-color" confirm-text="确定" placeholder="请选择培训机构" value-text-align="left" :data="organList" :columns="1" v-model="trainingOrgan" show-name></popup-picker>
+          </div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">帐号</span></div>
+          <div class="weui-cell__bd"><input type="text" placeholder="请输入身份证号" class="weui-input" v-model="info.identityCardNo"/></div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">姓名</span></div>
+          <div class="weui-cell__bd"><input type="text" placeholder="请输入真实姓名" class="weui-input" v-model="info.userName"/></div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">手机号</span></div>
+          <div class="weui-cell__bd"><input type="text" placeholder="请输入11位手机号" class="weui-input" v-model="info.phoneNum"/></div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">密码</span></div>
+          <div class="weui-cell__bd"><input type="password" placeholder="请输入6~18位由字母、数字组成的密码" class="weui-input" v-model="info.password"/></div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">确认密码</span></div>
+          <div class="weui-cell__bd"><input type="password" placeholder="请再次输入密码" class="weui-input" v-model="againPassword"/></div>
+        </div>
+        <div class="weui-cell">
+          <div class="weui-cell__hd"><span class="weui-label weui-label-2">单位名称</span></div>
+          <div class="weui-cell__bd"><input type="text" placeholder="请填写单位名称" class="weui-input" v-model="info.unitName"/></div>
+        </div>
+      </div>
+      <div class="btn-primary mt80" @click="submit">立即注册</div>
+      <div class="form-other mt60">
+        <div class="weui-check__label cb tc" @click="() => {this.push('/loginByPassword')}">直接登录</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style lang="less">
+  @import "../../../node_modules/vux/src/styles/weui/widget/weui_tips/weui-loadmore.less";
+  @import "../../../design/styles/webstyle.less";
+
+  .hb-btn-s-unable {
+    width: 90px;
+    height: 30px;
+    line-height: 2.5;
+    text-align: center;
+    border: 1px solid #ddd;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    border-radius: 30px;
+    display: inline-block;
+    color: #666;
+    font-size: 13px;
+  }
+</style>
+<script>
+  import * as storeTypes from '../../store/types'
+  import LoginUtil from '../../common/core/Login'
+  import AppConstant from '../../global/constants/AppConstant'
+  import RegionPicker from './RegionPicker.vue'
+  import { PopupPicker } from 'vux'
+
+  export default {
+    components: {PopupPicker, RegionPicker},
+    data () {
+      return {
+        info: {},
+        trainingOrgan: [],
+        organList: [],
+        btnDisabled: true,
+        againPassword: null
+      }
+    },
+    beforeMount () {
+      this.getAllOrgan()
+    },
+    methods: {
+      tranformOrgan (arr) {
+        return arr.map((item) => {
+          return {
+            name: item.unitName,
+            value: item.domain
+          }
+        })
+      },
+      getAllOrgan () {
+        this.$store.dispatch(storeTypes.GET_ALL_ORGAN).then((data) => {
+          if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.toast(data.head.message)
+            return
+          } else {
+            this.organList = this.tranformOrgan(data.data)
+          }
+        })
+      },
+      checkInfoAndToast () {
+        if (!this.trainingOrgan[0]) {
+          this.toast('请选择所属机构')
+          return false
+        }
+        if (!this.info.identityCardNo) {
+          this.toast('身份证号不能为空')
+          return false
+        }
+        if (this.info.identityCardNo.length && this.info.identityCardNo.length !== 18) {
+          this.toast('请输入18位身份证号')
+          return false
+        }
+        if (!this.info.userName) {
+          this.toast('姓名不能为空')
+          return false
+        }
+        if (!this.info.phoneNum) {
+          this.toast('手机号不能为空')
+          return false
+        }
+        if (this.info.phoneNum.length && this.info.phoneNum.length !== 11) {
+          this.toast('请输入11位手机号')
+          return false
+        }
+        if (!this.info.password) {
+          this.toast('密码不能为空')
+          return false
+        }
+        if (this.info.password.length && (this.info.password.length > 18 || this.info.password.length < 6)) {
+          this.toast('请输入6到18位密码')
+          return false
+        }
+        if (!this.againPassword) {
+          this.toast('确认密码不能为空')
+          return false
+        }
+        if (this.againPassword.length && (this.againPassword.length > 18 || this.againPassword.length < 6)) {
+          this.toast('请输入6到18位确认密码')
+          return false
+        }
+        if (this.info.password !== this.againPassword) {
+          this.toast('密码前后不一致，请核查！')
+          return false
+        }
+        if (!this.info.unitName) {
+          this.toast('单位名称不能为空')
+          return false
+        }
+        return true
+      },
+      /**
+       * 注册请求
+       */
+      submit () {
+        if (!this.btnDisabled) {
+          return
+        }
+        if (!this.checkInfoAndToast()) {
+          return
+        }
+        this.btnDisabled = false
+        let userInfo = {
+          unionId: this.getCookie(AppConstant.cookie.unionId),
+          openId: this.getCookie(AppConstant.cookie.openId),
+          accessToken: this.getCookie(AppConstant.cookie.accessToken),
+          registerChannel: '3'
+        }
+        let params = Object.assign({}, userInfo, this.info)
+        let domainPath
+        if (this.organList.length === 1) {
+          domainPath = this.organList[0].value
+        } else {
+          domainPath = this.trainingOrgan[0]
+        }
+        this.setHeaderDomain(domainPath)
+        this.$store.dispatch(storeTypes.ACCOUNT_REGISTER_REQUEST, params).then(data => {
+          this.hideLoading()
+          if (data.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            this.btnDisabled = true
+            this.toast(data.head.message)
+            return
+          }
+          this.toast('注册成功！')
+          this.login()
+        }).catch(e => {
+          this.hideLoading()
+          console.log(e)
+        })
+      },
+      login () {
+        this.showLoading('加载中......')
+        LoginUtil.login(this.getCookie(AppConstant.cookie.openId), this.getCookie(AppConstant.cookie.unionId), this.getCookie(AppConstant.cookie.accessToken), this.getCookie(AppConstant.cookie.nickname), this, console, storeTypes).then(data => {
+          this.hideLoading()
+          if (data !== undefined && data !== null && data.state === true) {
+            this.replace(this.pages.Home)
+          } else {
+            this.replace(this.pages.Login)
+            this.toast('登录失败')
+          }
+        }).catch(e => {
+          this.hideLoading()
+          console.log('---------------------登录异常-----------------' + e)
+          this.toast('登录失败')
+        })
+      }
+    }
+  }
+</script>

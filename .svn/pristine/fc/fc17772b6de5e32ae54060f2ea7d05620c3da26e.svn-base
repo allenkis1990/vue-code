@@ -1,0 +1,776 @@
+<template>
+  <!--确认订单-->
+  <div class="contain hb-box">
+    <div id="copyArticle" style="opacity: 0;position:fixed;left:-20000px;top:-20000px"></div>
+    <div class="hb-box-bd">
+      <div class="weui-panel hb-panel bor-b20">
+        <div class="weui-panel__hd">培训内容</div>
+        <div class="weui-panel__bd">
+          <div class="hb-media-box">
+            <div class="hb-media-box-hd">
+              <img class="hb-media-box-thumb"
+                   v-if="firstTrainingItem.photoPath!== undefined"
+                   :src="firstTrainingItem.photoPath"/>
+            </div>
+            <div class="hb-media-box-bd">
+              <div class="hb-media-box-title">{{firstTrainingItem.skuName}}</div>
+              <div class="hb-media-box-desc">年度：{{getSkuValueName(firstTrainingItem.skuPropertyNameList, '年度')}}年</div>
+              <div class="hb-media-box-desc">科目：{{getSkuValueName(firstTrainingItem.skuPropertyNameList, '科目')}}</div>
+              <div class="hb-media-box-desc">学时：{{firstTrainingItem.trainingPeriod}}</div>
+            </div>
+            <div class="price">￥<span class="num">{{firstTrainingItem.originalPrice}}</span></div>
+          </div>
+        </div>
+        <div class="weui-cells"
+             @click="goToTrainingContentListAction(traningShoopingItems)"
+             v-if="isShowMoreTrainingContent">
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd"></div>
+            <div class="weui-cell__ft">{{showString}}</div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="weui-panel hb-panel" v-if="payAccountList.length">
+        <div class="weui-panel__hd">选择收款账号</div>
+        <div class="weui-cells">
+          <div class="weui-cell"
+               @click="chosePayAccount(item)"
+               v-for="(item,index) in payAccountList">
+            <div class="weui-cell__bd"><img class="hb-pay-img" :src="item.logoPath" /><span
+              class="payAccountTit"
+              :title="item.accountAlias">{{item.accountAlias}}</span></div>
+            <div class="weui-cell__ft">
+              <div class="hb-form">
+                <img class="img"
+                     v-if="item.id!==payAccountId"
+                     src="../../../../design/images/radio.png" alt=" " />
+                <img class="img"
+                     v-if="item.id===payAccountId"
+                     src="../../../../design/images/radio-checked.png" alt=" " />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="weui-panel hb-panel bor-b20" v-if="isShowInvoiceInfo(totoalPrice,preConditionInfo.type)">
+        <div class="weui-panel__hd">发票</div>
+        <div class="weui-cells">
+          <div class="weui-cell" @click="changeIsNeedInvoiceAction">
+            <div class="weui-cell__bd">
+              <div>索要发票</div>
+            </div>
+            <div class="weui-cell__ft hb-form-box">
+              <div class="hb-form">
+                <img class="img"
+                     v-if="!isNeedInvoice"
+                     src="../../../../design/images/radio.png" alt=" "/>
+                <img class="img"
+                     v-if="isNeedInvoice"
+                     src="../../../../design/images/radio-checked.png" alt=" "/>
+              </div>
+            </div>
+          </div>
+          <div class="weui-cell weui-cell_access"
+               v-if="isNeedInvoice"
+               @click='chooseInvoiceTypeAction'>
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">发票</span>{{$store.state.orderModule.showInvoiceTypeText}}</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+          <div class="weui-cell weui-cell_access"
+               @click="chooseInvoiceSendModeAction"
+               v-if="isNeedInvoice && isShowInvoiceSendCell($store.state.orderModule.invoiceInfo.invoiceType)">
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">发票配送</span>{{$store.state.orderModule.showInvoiceSendText}}</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!--<div class="weui-panel hb-panel bor-b20">
+        <div class="weui-panel__hd">证明</div>
+        <div class="weui-cells">
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">证明配送</span>自取(厦门人才市场)</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+        </div>
+      </div>
+      <div class="weui-panel hb-panel">
+        <div class="weui-panel__hd">发票及证明</div>
+        <div class="weui-cells">
+          <div class="weui-cell">
+            <div class="weui-cell__bd">
+              <div>索要发票</div>
+            </div>
+            <div class="weui-cell__ft hb-form-box">
+              <div class="hb-form">
+                &lt;!&ndash;<img class="img" src="../../../../design/images/radio.png" alt=" " />&ndash;&gt;
+                <img class="img" src="../../../../design/images/radio-checked.png" alt=" " />
+              </div>
+            </div>
+          </div>
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">发票抬头</span>纸质-单位(福建华博教育科技股份有限公司）</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+          <div class="weui-cell weui-cell_access">
+            <div class="weui-cell__bd">
+              <div class="to"><span class="tit">物品配送</span>自取(厦门人才市场)</div>
+            </div>
+            <div class="weui-cell__ft"></div>
+          </div>
+        </div>
+      </div>-->
+    </div>
+    <div class="hb-tabbar">
+      <div class="left-box">待付金额<span class="ci fs40 ml20">￥{{toDecimal2(totoalPrice)}}</span></div>
+      <div class="hb-btn"
+           @click="creatOrderAction"
+           :class="[getShowSubmitButtonClass(preConditionInfo.type,totoalPrice,isNeedInvoice,$store.state.orderModule.invoiceInfo,certificateSendInfo,isCreatingOrder)]">
+        提交订单
+      </div>
+    </div>
+  </div>
+
+
+</template>
+
+<style lang="less">
+  @import "../../../../design/styles/webstyle.less";
+
+  .lwh-popup-picker .hb-panel .weui-cell {
+    padding: 0
+  }
+  .payAccountTit{position:absolute;left:2.2rem;top:0.08rem;display:inline-block;width:4rem;overflow:hidden;text-overflow: ellipsis;white-space: nowrap}
+</style>
+
+<script>
+  import * as storeTypes from '@/store/types'
+  import utils from '@/common/util/Utils'
+  import constant from '@/global/constants/AppConstant'
+  export default {
+    components: {},
+    beforeRouteLeave (to, from, next) {
+      console.log(to,'去')
+      console.log(from,'来')
+      if (to.path !== '/configInvoiceInfo' && to.path !== '/configInvoiceDeliver') {
+        this.$store.dispatch(storeTypes.ORDER_SET_CREATE_TEMP_INVOICE_INFO, {})
+        this.$store.dispatch(storeTypes.ORDER_INVOICE_TEXT, '请选择发票类型')
+        this.$store.dispatch(storeTypes.ORDER_INVOICE_DER_TEXT, '请选择配送方式')
+      }
+      next()
+    },
+    data () {
+      return {
+        traningShoopingItems: [],
+        firstTrainingItem: {},
+        totoalPrice: 0,
+        showString: '',
+        isShowMoreTrainingContent: false,
+        preConditionInfo: {},
+        isNeedInvoice: false,
+        showInvoiceSendText: '请选择配送方式',
+        showInvoiceTypeText: '请选择发票类型',
+        invoiceInfo: {},
+        certificateSendInfo: {},
+        isCreatingOrder: false,
+        payAccountList: [],
+        payAccountId: null
+      }
+    },
+    computed: {},
+    mounted () {
+      // 获取将要购买的商品列表
+      var skuList = []
+      var that = this
+      try {
+        var value = this.$store.state.orderModule.selectedShoopingItemsArray
+        if (value.length) {
+          this.traningShoopingItems = value
+          this.firstTrainingItem = value[0]
+          console.log(this.firstTrainingItem)
+          for (let index = 0; index < value.length; index++) {
+            let item = value[index]
+            this.totoalPrice += item.originalPrice
+          }
+          console.log(value)
+          console.log(value.length, '99')
+//          如果从配置发票页面返回发票信息填写了那么需要发票打勾
+          if (this.$store.state.orderModule.showInvoiceTypeText && this.$store.state.orderModule.showInvoiceTypeText !== '请选择发票类型') {
+            this.isNeedInvoice = true
+          }
+//          如果从配置发票配送页面返回配送信息填写了那么需要发票打勾
+          if (this.$store.state.orderModule.showInvoiceSendText && this.$store.state.orderModule.showInvoiceSendText !== '请选择配送方式') {
+            this.isNeedInvoice = true
+          }
+          if (value.length >= 2) {
+            var showString = '共' + value.length + '个培训内容，点击查看更多'
+            this.showString = showString
+            this.isShowMoreTrainingContent = true
+          }
+          console.log(skuList)
+          value.forEach(function (item) {
+            skuList.push(item.skuId)
+          })
+          console.log(skuList)
+        }
+      } catch (e) {
+      }
+      if (skuList.length) {
+        this.loadPayAccountIds(skuList).then(function (data) {
+          that.$vux.loading.hide()
+          if (data.code === 200) {
+            console.log(data.data, '99')
+            if (data.data.length > 0) {
+              console.log(data.data, '99')
+              that.payAccountList = data.data
+              that.payAccountId = data.data[0].id
+              that.loadPreconditionData(that.payAccountId)
+            } else {
+              that.toast('后台还没有配置收款账号')
+            }
+          } else {
+            that.toast(data.message)
+          }
+        }, function (data) {
+          that.$vux.loading.hide()
+          that.toast(data.message)
+        })
+      }
+//      this.loadPreconditionData()
+    },
+    methods: {
+      chosePayAccount: function (item) {
+        if (item.id === this.payAccountId) {
+          return false
+        }
+        this.payAccountId = item.id
+        this.loadPreconditionData(this.payAccountId)
+      },
+      _modalConfirmAction () {
+//        wx.redirectTo({
+//          url: '/pages/order/orderDetail/orderDetail?orderNo=' + this.data.orderNo,
+//        })
+        this.replace({
+          path: '/orderDetail',
+          query: {
+            orderNo: this.orderNo
+          }
+        });
+        console.log('去订单详情')
+      },
+      _modalConfirmGotoStudyAction () {
+//        wx.switchTab({
+//          url: '/pages/mystudycontrol/myStudy/myStudy',
+//        })
+        console.log('去我的学习')
+      },
+      submitOrder: function (params) {
+        let context = this
+        if (this.isCreatingOrder) {
+          return
+        }
+        this.isCreatingOrder = true
+        console.log('可以提交订单了',params)
+        this.$vux.loading.show({
+          text: '订单创建中...'
+        })
+        var type = 'post'
+        var url = constant.apiUrl.createOrderModule.orderCreat
+        utils.getAjaxData(type, params, url).then(res => {
+          setTimeout(function () {
+            context.isCreatingOrder = false
+          }, 500)
+          this.$vux.loading.hide()
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            if (res.head.code === 600) {
+              this.commonConfirm(context, res)
+            } else {
+              return this.toast(res.head.message)
+            }
+          } else {
+            if (context.totoalPrice === 0) {
+              this.orderNo = res.data.orderNo
+//              context.customModal.show()
+              this.$vux.confirm.show({
+                title: '系统提示',
+                content: '该订单为0元订单，无需支付!',
+                confirmText: '查看订单详情',
+//                cancelText: '进入学习',
+//                onCancel: function () {
+//                  context._modalConfirmGotoStudyAction()
+//                },
+                onConfirm: function () {
+                  context._modalConfirmAction()
+                }
+              })
+            } else {
+              this.push({
+                path: '/orderPay',
+                query: {
+                  orderNo: res.data.orderNo
+                }
+              })
+              console.log('去支付')
+            }
+          }
+        }).catch(e => {
+          console.log(e)
+          this.isCreatingOrder = false
+          this.$vux.loading.hide()
+          return this.toast('请求失败')
+        })
+//        let context = this
+//        this.setData({
+//          isCreatingOrder: true
+//        })
+//        wx.showLoading({
+//          title: '订单创建中...',
+//        })
+//        app.requestData(app.config.orderCreat, params, 'POST').then(function (response) {
+//          wx.hideLoading()
+//          setTimeout(function () {
+//            if (context) {
+//              context.setData({
+//                isCreatingOrder: false
+//              })
+//            }
+//          }, 500)
+//          if (response.head.code == app.constant.network_result_success) {
+//            if (context.data.totoalPrice == 0) {
+//              context.setData({
+//                orderNo: response.data.orderNo
+//              })
+//              context.customModal.show()
+//            } else {
+//              wx.redirectTo({
+//                url: '/pages/order/orderPay/orderPay?orderNo=' + response.data.orderNo,
+//              })
+//            }
+//          } else {
+//
+//            wx.showToast({
+//              title: response.head.message,
+//              icon: 'none'
+//            })
+//          }
+//        }).catch(function (error) {
+//          wx.hideLoading()
+//          context.setData({
+//            isCreatingOrder: false
+//          })
+//          wx.showToast({
+//            title: '数据请求失败!',
+//            icon: 'none'
+//          })
+//        })
+      },
+      // 校验订单为电子发票并金额数大于1000  纸制发票大于10000 的情况
+      checkOrderSuitableAndInvoiceType: function () {
+        if (this.isNeedInvoice && this.$store.state.orderModule.invoiceInfo.invoiceType === 2 && this.totoalPrice > 1000) {
+          this.toast('由于本单位电子发票的面额最大为1000元，因此无法整笔购买，请拆分下单购买！')
+          return false
+        }
+        if (this.isNeedInvoice && this.$store.state.orderModule.invoiceInfo.invoiceType !== 2 && this.totoalPrice > 10000) {
+          this.toast('由于本单位纸制发票的面额最大为10000元，因此无法整笔购买，请拆分下单购买！')
+          return false
+        }
+        return true
+      },
+//       检测信息是否已经填写
+      checkInfoCorrent: function () {
+        if (!this.payAccountId) {
+          this.toast('请选择收款账号')
+          return false
+        }
+//         0元订单的情况
+        if (this.totoalPrice === 0) {
+          if (this.preConditionInfo.type === 2 || this.preConditionInfo.type === 3 || this.preConditionInfo.type === 4) {
+            if (this.certificateSendInfo.deliverType === undefined) {
+              this.toast('请完善证明配送信息！')
+              return false
+            }
+          } else {
+            return true
+          }
+        }
+        if (this.totoalPrice !== 0) {
+          switch (this.preConditionInfo.type) {
+            case 1: {
+              if (this.isNeedInvoice) {
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === undefined) {
+                  this.toast('请填写发票信息！')
+                  return false
+                }
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === 2) {
+                  return true
+                } else {
+                  if (this.$store.state.orderModule.invoiceInfo.deliverType === undefined) {
+                    this.toast('请完善发票配送信息！')
+                    return false
+                  }
+                }
+              } else {
+                return true
+              }
+              break
+            }
+            case 2: {
+              if (this.certificateSendInfo.deliverType === undefined) {
+                this.toast('请完善证明配送信息！')
+                return false
+              }
+              break
+            }
+            case 3: {
+              if (this.isNeedInvoice) {
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === undefined) {
+                  this.toast('请填写发票信息！')
+                  return false
+                }
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === 2) {
+                  if (this.certificateSendInfo.deliverType === undefined) {
+                    this.toast('请完善证明配送信息！')
+                    return false
+                  }
+                } else {
+                  if (this.certificateSendInfo.deliverType === undefined) {
+                    this.toast('请完善配送信息！')
+                    return false
+                  }
+                }
+              }
+              break
+            }
+            case 4: {
+              if (this.isNeedInvoice) {
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === undefined) {
+                  this.toast('请填写发票信息！')
+                  return false
+                }
+                if (this.$store.state.orderModule.invoiceInfo.invoiceType === 2) {
+                  if (this.certificateSendInfo.deliverType === undefined) {
+                    this.toast('请完善证明配送信息！')
+                    return false
+                  }
+                } else {
+                  if (this.$store.state.orderModule.invoiceInfo.deliverType === undefined) {
+                    this.toast('请完善发票配送信息！')
+                    return false
+                  }
+                  if (this.certificateSendInfo.deliverType === undefined) {
+                    this.toast('请完善证明配送信息！')
+                    return false
+                  }
+                }
+              }
+              break
+            }
+          }
+        }
+        return true
+      },
+      creatOrderAction: function () {
+        var that = this
+        // 提交订单数据
+        if (this.checkInfoCorrent()) {
+          if (this.checkOrderSuitableAndInvoiceType()) {
+            let params = {
+              paymentChannel: 'WECHAT_OFFICIAL_ACCOUNTS',
+              accountId: that.payAccountId
+            }
+            params.deliverInfo = {}
+            // TODO 存入商品id列表
+            let orderSkuPlaceInfoList = []
+            if (this.traningShoopingItems.length) {
+              for (let index = 0; index < this.traningShoopingItems.length; index++) {
+                let item = this.traningShoopingItems[index]
+                let skuObject = {
+                  courseId: '',
+                  yearOptionsId: '',
+                  coursePoolId: item.coursePackageId,
+                  commoditySkuId: item.skuId,
+                  schemeId: item.schemeId
+                }
+                if (item.courseId !== undefined && item.courseId.length) {
+                  skuObject.courseId = item.courseId
+                }
+                if (item.coursePackageId !== undefined && item.coursePackageId.length) {
+                  skuObject.coursePoolId = item.coursePackageId
+                }
+                if (item.yearOptionId !== undefined && item.yearOptionId.length) {
+                  skuObject.yearOptionsId = item.yearOptionId
+                }
+                orderSkuPlaceInfoList.push(skuObject)
+              }
+            }
+            params.orderSkuPlaceInfoList = orderSkuPlaceInfoList
+            if (parseFloat(this.totoalPrice) === 0) {
+              this.$store.state.orderModule.invoiceInfo.needInvoice = false
+              params.deliverInfo.invoiceInfo = this.$store.state.orderModule.invoiceInfo
+              if (this.certificateSendInfo.deliverType !== undefined) {
+                params.deliverInfo.cerInfo = this.certificateSendInfo
+              }
+              this.submitOrder(params)
+            } else {
+              this.$store.state.orderModule.invoiceInfo.needInvoice = this.isNeedInvoice
+              params.deliverInfo.invoiceInfo = this.$store.state.orderModule.invoiceInfo
+              params.deliverInfo.cerInfo = this.certificateSendInfo
+              this.submitOrder(params)
+            }
+          }
+        }
+      },
+      /**
+       * 选择发票类型
+       */
+      chooseInvoiceTypeAction: function () {
+        console.log(1)
+        var that = this
+        this.$router.push({
+          path: '/configInvoiceInfo',
+          query: {
+            invoiceInfo: JSON.stringify(that.$store.state.orderModule.invoiceInfo),
+//            invoiceInfo: JSON.stringify({}),
+            supportInvoiceType: JSON.stringify(that.preConditionInfo.supportInvoiceType),
+            supportTitleType: JSON.stringify(that.preConditionInfo.supportTitleType)
+          }
+        })
+//        configInvoiceInfo
+//        wx.navigateTo({
+//          url: '/pages/order/orderInvoice/orderInvoice?invoiceInfo=' + JSON.stringify(this.data.invoiceInfo) + '&supportInvoiceType=' + JSON.stringify(this.data.preConditionInfo.supportInvoiceType) + '&supportTitleType=' + JSON.stringify(this.data.preConditionInfo.supportTitleType)
+//        })
+      },
+      /**
+       * 选择发票配送方式
+       */
+      chooseInvoiceSendModeAction: function () {
+        console.log(2)
+        if (!this.payAccountId) {
+          return this.toast('请选择收款账号')
+        }
+        var that = this
+        this.$router.push({
+          path: '/configInvoiceDeliver',
+          query: {
+            invoiceInfo: JSON.stringify(that.$store.state.orderModule.invoiceInfo),
+//            invoiceInfo: JSON.stringify({}),
+            supportDeliveryType: JSON.stringify(that.preConditionInfo.supportInvoiceDeliveryType),
+            accountId: that.payAccountId
+          }
+        })
+//        wx.navigateTo({
+//          url: '/pages/order/orderInvoiceSend/orderInvoiceSend?invoiceInfo=' + JSON.stringify(this.data.invoiceInfo) + '&supportDeliveryType=' + JSON.stringify(this.data.preConditionInfo.supportInvoiceDeliveryType),
+//        })
+      },
+      isShowInvoiceInfo: function (totolPrice, canSendType) {
+        if (totolPrice !== undefined && totolPrice !== 0 && canSendType !== undefined && (canSendType === 1 || canSendType === 4)) {
+          return true
+        }
+        return false
+      },
+      isShowInvoiceSendCell: function (invoiceType) {
+        if (invoiceType !== undefined && invoiceType === 2) {
+          return false
+        }
+        return true
+      },
+      getShowSubmitButtonClass: function (supprotDistributionType, totalPrice, needInvoice, invoiceInfo, cerSendInfo, isCreatingOrder) {
+        // supprotDistributionType 1.只支持发票 2.只支持证书 3.只支持发票和证书配送 4.支持发票和证书配送|
+        if (totalPrice === undefined || supprotDistributionType === undefined || needInvoice === undefined || invoiceInfo === undefined || cerSendInfo === undefined) {
+          return 'disabled'
+        }
+        if (isCreatingOrder) {
+          return 'disabled'
+        }
+        // 0元订单
+        if (parseFloat(totalPrice) === 0) {
+//          1.只支持发票
+          if (supprotDistributionType === 1) {
+            return ''
+          } else if (supprotDistributionType === 2 || supprotDistributionType === 3 || supprotDistributionType === 4) {
+            if (cerSendInfo.deliverType === undefined) {
+              return 'disabled'
+            } else {
+              return ''
+            }
+          }
+        } else { // 非0元订单
+//          1.只支持发票
+          if (supprotDistributionType === 1) {
+            if (needInvoice) {
+              if (invoiceInfo.invoiceType === undefined) {
+                return 'disabled'
+              } else {
+                if (invoiceInfo.invoiceType === 2) {
+                  return ''
+                } else {
+                  if (invoiceInfo.deliverType === undefined) {
+                    return 'disabled'
+                  } else {
+                    return ''
+                  }
+                }
+              }
+            } else {
+              return ''
+            }
+          } else if (supprotDistributionType === 2) {
+            if (cerSendInfo.deliverType === undefined) {
+              return 'disabled'
+            } else {
+              return ''
+            }
+          } else if (supprotDistributionType === 3 || supprotDistributionType === 4) {
+            if (needInvoice) {
+              if (invoiceInfo.invoiceType === undefined || cerSendInfo.deliverType === undefined) {
+                return 'disabled'
+              } else {
+                if (invoiceInfo.invoiceType === 2) {
+                  return ''
+                } else {
+                  if (invoiceInfo.deliverType === undefined) {
+                    return 'disabled'
+                  } else {
+                    return ''
+                  }
+                }
+              }
+            } else {
+              return ''
+            }
+          }
+        }
+        return 'disabled'
+      },
+      toDecimal2: function (x) {
+        if (x === undefined) {
+          return '0.00'
+        }
+        var f
+        f = parseFloat(x)
+        if (isNaN(f)) {
+          return false
+        }
+        f = Math.round(x * 100) / 100
+        var s = f.toString()
+        var rs = s.indexOf('.')
+        if (rs < 0) {
+          rs = s.length
+          s += '.'
+        }
+        while (s.length <= rs + 2) {
+          s += '0'
+        }
+        return s
+      },
+      /**
+       * 修改用户是否索要发票
+       */
+      changeIsNeedInvoiceAction () {
+        if (this.preConditionInfo.provideType === 2) {
+          return
+        }
+        this.isNeedInvoice = !this.isNeedInvoice
+      },
+      goToTrainingContentListAction: function (list) {
+        this.push({
+          name: 'moreSubOrderList',
+          params: {
+            subOrderList: list
+          }
+        })
+      },
+      loadPayAccountIds: function (skuList) {
+        let params = {
+          commoditySkuIdList: skuList,
+          paymentChannelType: 'WECHAT_OFFICIAL_ACCOUNTS'
+        }
+        this.$vux.loading.show({
+          text: '加载中'
+        })
+        var type = 'get'
+        var url = constant.apiUrl.createOrderModule.findPaymentAccountByCommoditySku
+        return new Promise(function (resolve,reject) {
+          utils.getAjaxData(type, params, url).then(res => {
+//            this.$vux.loading.hide()
+            if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+              reject({
+                code: 500,
+                message: res.head.message
+              })
+//              return this.toast(res.head.message)
+            } else {
+              resolve({
+                code: 200,
+                data: res.data
+              })
+            }
+          }).catch(e => {
+            console.log(e)
+//            this.$vux.loading.hide()
+//            return this.toast('请求失败')
+            reject({
+              code: 500,
+              message: '请求失败'
+            })
+          })
+        })
+      },
+      // 加载前置条件
+      loadPreconditionData: function (accountId) {
+        let params = {
+          accountId: accountId
+        }
+        this.$vux.loading.show({
+          text: '加载中'
+        })
+        var type = 'get'
+        var url = constant.apiUrl.createOrderModule.orderCreatPreCondition
+        utils.getAjaxData(type, params, url).then(res => {
+          this.$vux.loading.hide()
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            this.preConditionInfo = res.data
+            console.log(this.preConditionInfo, 'preConditionInfo')
+            if (res.data.provideType === 2) {
+              this.isNeedInvoice = true
+            }
+          }
+        }).catch(e => {
+          console.log(e)
+          this.$vux.loading.hide()
+          return this.toast('请求失败')
+        })
+      },
+      getSkuValueName: function (skuArr, skuName) {
+        if (!skuArr) {
+          return ''
+        }
+        var str = ''
+        skuArr.forEach(function (item) {
+          if (item.skuPropertyName === skuName) {
+            str = item.skuPropertyValueName
+          }
+        })
+        return str
+      }
+    },
+    destroyed: function () {
+//      console.log('销毁cookie')
+//      cookie.remove('SELECTED_SHOPPING_ITEMS')
+    }
+  }
+</script>

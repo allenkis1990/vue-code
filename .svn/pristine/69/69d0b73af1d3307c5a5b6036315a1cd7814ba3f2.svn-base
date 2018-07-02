@@ -1,0 +1,1044 @@
+<template>
+  <div class="contain">
+    <div id="copyArticle" style="display:none">{{copyArticleTxt}}</div>
+    <div class="hb-header-box">
+      <div class="header-left" @click="drawerVisibilityEvent"><a class="hb-ico ico-menu"></a></div>
+      <div class="header-tit">购物车</div>
+      <!--<div class="header-right"><a class="header-txt">登录/注册</a></div>-->
+    </div>
+
+
+    <div v-if="shoppingCartList.length<=0&&disableShoppingCartList.length<=0">
+      <div class="no-data-box pt100">
+        <img class="no-data-img" src="../../../design/images/no-data-img.png" alt=" " />
+        <div class="no-data-txt">购物车空空如也<br/>赶紧去报名培训吧！</div>
+      </div>
+      <div class="btn-primary btn-m mt30" @click="goHome">报名培训</div>
+    </div>
+    <!--v-if="shoppingCartList.length>0"-->
+    <scroller
+      v-if="shoppingCartList.length>0 || disableShoppingCartList.length>0"
+      style="box-sizing: border-box;"
+      :height="scrollerHeight"
+      lock-x
+      scrollbar-y
+      use-pulldown
+      use-pullup
+      @on-pullup-loading="loadMoreFn"
+      @on-pulldown-loading="refreshData"
+      v-model="scroller" ref="scroller">
+
+      <div class="hb-box-bd hb-box-bd-1">
+        <!--班级列表-->
+        <div class="hb-wrap-box hb-wrap-box-4">
+          <div class="hb-panel">
+            <div class="hb-panel-bd bor-b20"
+                 v-if="item.cartCommdities.length>0"
+                 v-for="(item,index) in shoppingCartList">
+              <div class="weui-panel hb-panel">
+                <div class="weui-cell weui-cell_access">
+                  <div class="hb-form mr20" @click="choseTheUnitShoppingGoods(item)">
+                    <img class="img"
+                         v-if="!(getCheckedListLengthbyUnitId(item.unitId)===item.cartCommdities.length&&shoppingChoseList.length!==0)"
+                         src="../../../design/images/radio.png" alt=" " />
+                    <img class="img"
+                         v-if="getCheckedListLengthbyUnitId(item.unitId)===item.cartCommdities.length&&shoppingChoseList.length!==0"
+                         src="../../../design/images/radio-checked.png" alt=" " />
+                  </div>
+                  <div class="weui-cell__bd">
+                    <div class="to c6 fs28" @click="goHomeByUnit(item)"><span class="label-company">机构</span>{{item.unitName}}</div>
+                  </div>
+                  <div class="weui-cell__ft"></div>
+                </div>
+              </div>
+              <div class="hb-media-box lwh-popup-picker" v-for="(subItem,subIndex) in item.cartCommdities">
+                <div class="hb-form mr20"
+                     @click="selecteItemAction(subItem,$event)">
+                  <img class="img"
+                       v-if="!subItem.isSelected"
+                       src="../../../design/images/radio.png" alt=" " />
+                  <img class="img"
+                       v-if="subItem.isSelected"
+                       src="../../../design/images/radio-checked.png" alt=" " />
+                </div>
+                <div class="hb-media-box-hd">
+                  <img class="hb-media-box-thumb"
+                       :src="iamgeUrl(subItem)" />
+                </div>
+                <div class="hb-media-box-bd">
+                  <div class="hb-media-box-title">{{subItem.skuName}}</div>
+                  <div class="hb-media-box-desc">科目：{{getSkuValueName(subItem.skuPropertyNameList,'科目')}}
+                    <span class="ml30" v-if="!isShowYearPicker(subItem)">年度：{{getSkuValueName(subItem.skuPropertyNameList,'年度')}}年</span>
+                    <popup-picker :data="subItem.optionYearViewList"
+                                  popup-title="请选择专业课认定的继续教育年度"
+                                  :show-name="true"
+                                  value-text-align="left"
+                                  v-if="isShowYearPicker(subItem)"
+                                  v-model="subItem.optionYearModelList"
+                                  @on-hide="pickHide"
+                                  @on-change="change(subItem)">
+
+                      <template slot="title" slot-scope="props">
+                        <span>年度：</span>
+                      </template>
+
+                    </popup-picker>
+                  </div>
+                  <div class="hb-media-box-desc">学习形式：{{getStudyType(subItem)}}</div>
+                  <div class="hb-media-box-desc">学时：{{subItem.trainingPeriod}}</div>
+                </div>
+                <div class="price">￥<span class="num">{{subItem.originalPrice}}</span></div>
+              </div>
+            </div>
+
+            <div class="hb-panel-bd pb30"
+                 v-if="shoppingCartTotalSize<pager.pageSize&&disableShoppingCartList.length">
+              <div class="weui-panel hb-panel">
+                <div class="weui-cell weui-cell_access">
+                  <div class="weui-cell__bd">
+                    <div class="to c6 fs28">失效培训商品</div>
+                  </div>
+                </div>
+              </div>
+              <div class="hb-media-box failure-items" v-for="(disItem,disIndex) in disableShoppingCartList">
+                <div class="failure-label">失效</div>
+                <div class="hb-media-box-hd">
+                  <img class="hb-media-box-thumb" :src="iamgeUrl(disItem)" />
+                </div>
+                <div class="hb-media-box-bd">
+                  <div class="hb-media-box-title">{{disItem.skuName}}</div>
+                  <div class="hb-media-box-desc">科目：{{getSkuValueName(disItem.skuPropertyNameList,'科目')}}
+                    <span class="ml30">年度：{{getSkuValueName(disItem.skuPropertyNameList,'年度')}}年</span></div>
+                  <div class="hb-media-box-desc">学习形式：{{getStudyType(disItem)}}</div>
+                  <div class="hb-media-box-desc">学时：{{disItem.trainingPeriod}}</div>
+                </div>
+                <div class="price">￥<span class="num">{{disItem.originalPrice}}</span></div>
+              </div>
+              <div class="btn-default btn-s mt30" @click="clearDisable">清空失效培训内容</div>
+            </div>
+            <!--this.disableShoppingCartList = res.data.shoppingItems
+            this.disableShoppingCartTotalSize = res.data.shoppingItems.length-->
+            <div class="loading-tips" v-if="shoppingCartTotalSize<pager.pageSize && disableShoppingCartTotalSize<disablePager.pageSize"><span class="line"></span><span class="txt">已经到最底部啦</span><span class="line"></span>
+            </div>
+            <div class="loading-tips" v-if="(shoppingCartTotalSize>=pager.pageSize || disableShoppingCartTotalSize>=disablePager.pageSize) && scroller.pullupStatus === 'default'"><span class="line"></span><span class="txt">上拉加载更多</span><span class="line"></span>
+            </div>
+
+          </div>
+        </div>
+        <!--/班级列表-->
+      </div>
+
+      <div slot="pulldown" class="xs-plugin-pulldown-container xs-plugin-pulldown-down"
+           style="position: absolute; width: 100%; height: 40px; line-height: 40px; top: -10px; text-align: center;">
+        <span v-show="scroller.pulldownStatus === 'default'"></span>
+        <span class="pulldown-arrow" v-show="scroller.pulldownStatus === 'down' || scroller.pulldownStatus==='up'"
+              :class="{'rotate': scroller.pulldownStatus === 'up'}"
+              style="font-size: 16px;font-weight: bold;">↓</span>
+        <div v-show="scroller.pulldownStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+              刷新中...
+              </span>
+          </p>
+        </div>
+      </div>
+
+      <!--<div slot="pullup" style="position: absolute; width: 100%; height: 40px; line-height: 40px; bottom: 20px; text-align: center;color:#999;font-size:.26rem">
+        <div v-show="scroller.pullupStatus === 'loading'">
+          加载更多...
+        </div>
+      </div>-->
+      <div slot="pullup" class="xs-plugin-pullup-container xs-plugin-pullup-up"
+           style="position: absolute; width: 100%; height: 40px; bottom: 10px; text-align: center;">
+        <span class="pullup-arrow"
+              v-show="(scroller.pullupStatus === 'up'||scroller.pullupStatus === 'down') && !noMore"
+              :class="{'rotate':scroller.pullupStatus === 'down'}"
+              style="font-size: 16px;font-weight: bold;">↑</span>
+        <div v-show="scroller.pullupStatus === 'loading'">
+          <p class="inloading">
+            <inline-loading></inline-loading>
+            <span class="il-text">
+      加载中...
+      </span>
+          </p>
+        </div>
+      </div>
+    </scroller
+>
+
+
+    <div class="hb-tabbar" v-if="shoppingCartList.length>0">
+      <div class="left-box flex">
+        <!--<div class="hb-form mr20" @click="selectAllAction($event)">
+          <img class="img"
+               v-if="!isSelectedAll"
+               src="../../../design/images/radio.png" alt=" " />
+          <img class="img"
+               v-if="isSelectedAll"
+               src="../../../design/images/radio-checked.png" alt=" " />
+        </div>-->
+        <!--<span class="fs28" @click="selectAllAction">全选</span>-->
+        <span class="fs28" @click="deleteShoppingItemsAction">删除</span>
+      </div>
+      <div class="fs28 c6 mr20">合计：<span class="ci">¥{{totalPriceString}}</span></div>
+      <div class="hb-btn"
+           @click="purchaseAction"
+           :class="{'disabled':!checkHasChooseItem()}">{{showSettlementText}}</div>
+      <!--不可操作-->
+      <!--<div class="hb-btn disabled">结算</div>-->
+    </div>
+
+    <!--返回顶部-->
+    <div class="layer-box" @click="goTopEvent" v-if="shoppingCartList.length>0">
+      <div class="a-items"><img
+        src="../../../design/images/icon-top.png"
+        alt=" " class="img"></div>
+    </div>
+    <!--/返回顶部-->
+  </div>
+
+
+</template>
+
+<style lang="less">
+  @import "../../../design/styles/webstyle.less";
+  .lwh-popup-picker .vux-cell-box .weui-cell{padding:0}
+</style>
+
+<script>
+  import { Scroller, InlineLoading, PopupPicker } from 'vux'
+  import * as storeTypes from '../../store/types'
+  import utils from '@/common/util/Utils'
+  import constant from '@/global/constants/AppConstant'
+  export default {
+    components: {
+      Scroller,
+      InlineLoading,
+      PopupPicker
+    },
+    data () {
+      return {
+        scrollerHeight: '',
+        scroller: {
+          pullupStatus: 'default',
+          pulldownStatus: 'default'
+        },
+        pager: {
+          pageNo: 1,
+          pageSize: 1
+        },
+        disablePager: {
+          pageNo: 1,
+          pageSize: 1
+        },
+//      0加载 1下拉加载 2加载更多
+        scorllerStatus: 0,
+        noMore: false,
+        orderNo: '',
+        shoppingCartList: [],
+        disableShoppingCartList: [],
+        shoppingChoseList: [],
+        selectedItemsArray: [],
+        shoppingCartTotalSize: 0,
+        disableShoppingCartTotalSize: 0,
+        totalPriceString: '0.00',
+        totalPrice: 0,
+        showSettlementText: '结算( 0 )',
+        isSelectedAll: false,
+        hasLoseEfficacyItem: false,
+        loadMoreTrggierTime: null,
+        copyArticleTxt: null
+      }
+    },
+    computed: {
+    },
+    destroyed () {
+    },
+    mounted () {
+      console.log('shoppingCart!!!!!!!!!!')
+      this.scrollerHeight = (window.outerHeight || window.innerHeight) + 'px';
+      this.getShoppingCartList()
+      this.getInvalidShoppingCartListV3()
+    },
+    methods: {
+      drawerVisibilityEvent () {
+        this.$store.commit(storeTypes.GLOBAL_SET_DRAWER, true)
+      },
+      goClassDetail (item) {
+        if (item.disable) {
+          return false
+        }
+        let trainingItem = {
+          skuId: item.skuId,
+          schemeId: item.schemeId
+        }
+        if (item.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+          trainingItem.courseId = item.courseId
+          trainingItem.coursePackageId = item.coursePackageId
+        }
+        this.$router.push({
+          path: '/classDetail',
+          query: {
+            categoryType: item.categoryType,
+            trainingItem: trainingItem
+          }
+        })
+      },
+      goHome: function () {
+        this.$router.push({
+          path: '/demo/home'
+        })
+      },
+      goHomeByUnit: function (item) {
+        this.$router.push({
+          path: '/demo/home',
+          query: {
+            unitId: item.unitId,
+            unitName: item.unitName,
+            domain: this.$store.getters.userInfo.domain
+          }
+        })
+      },
+      /**
+       * 获取失效商品
+       */
+      getInvalidShoppingCartListV3() {
+        var that = this
+        let params = {
+          pageNo: that.disablePager.pageNo,
+          pageSize: that.disablePager.pageSize
+        }
+        var type = 'get'
+        var url = constant.apiUrl.shoppingCartModule.getInvalidShoppingCartListV3
+        if (this.scorllerStatus === 0) {
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+        }
+        utils.getAjaxData(type, params, url).then(res => {
+          this.loadingUIState();
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            console.log(res.data,'失效')
+//            this.hasLoseEfficacyItem = true
+            this.disableShoppingCartTotalSize = res.data.shoppingItems.length
+            console.log(this.scorllerStatus,'状态')
+            if (this.scorllerStatus === 2) {
+              this.disableShoppingCartList = this.disableShoppingCartList.concat(res.data.shoppingItems)
+              this.scorllerStatus = 0
+            } else {
+              this.disableShoppingCartList = res.data.shoppingItems
+              this.initPager()
+            }
+          }
+        }).catch(e => {
+          console.log(e)
+          this.loadingUIState();
+          return this.toast('请求失败')
+        })
+      },
+      clearDisable: function () {
+        var that = this
+        this.$vux.confirm.show({
+          title: '系统提示',
+          content: '确认清空失效的培训内容？',
+          onCancel: function () {
+          },
+          onConfirm: function () {
+            that.clearLoseEfficacyItemsAction()
+          }
+        })
+      },
+      /**
+       * 清空失效培训内容操作
+       */
+      clearLoseEfficacyItemsAction() {
+        this.$vux.loading.show({
+          text: '清除失效商品中'
+        })
+        let params = {}
+        var type = 'post'
+        var url = constant.apiUrl.shoppingCartModule.shoppingCartClearLoseEfficacy
+        utils.getAjaxData(type, params, url).then(res => {
+          this.$vux.loading.hide()
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            this.disableShoppingCartList = []
+            this.disablePager.pageNo = 1
+            this.disableShoppingCartTotalSize = 0
+          }
+        }).catch(e => {
+          console.log(e)
+          this.$vux.loading.hide()
+          return this.toast('请求失败')
+        })
+      },
+//      pick确定的时候触发
+      pickHide: function (type) {
+        console.log(type)
+      },
+//      选定年度后发送保存购物车年度请求
+      change: function (item) {
+        console.log(item.optionYearModelList)
+        var yearOptionId = item.optionYearModelList[0]
+        if (!yearOptionId) {
+          item.yearOptionId = ''
+          return this.toast('请选择年度')
+        } else {
+          let params = {}
+          let classInfo = {
+            courseId: item.courseId,
+            yearOptionId: yearOptionId,
+            coursePackageId: item.coursePackageId,
+            skuId: item.skuId,
+            schemeId: item.schemeId,
+            dealPrice: item.dealPrice,
+            trainingPeriod: item.trainingPeriod
+          }
+          params.classInfo = classInfo
+          var type = 'post'
+          var url = constant.apiUrl.shoppingCartModule.shoppingChangeYear
+          utils.getAjaxData(type, params, url).then(res => {
+            if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+              return this.toast(res.head.message)
+            } else {
+              this.saveItemYearSuccessDo(item,yearOptionId)
+              console.log(this.shoppingCartList,'更新购物车年度完成后')
+            }
+          }).catch(e => {
+            console.log(e)
+            return this.toast('请求失败')
+          })
+        }
+      },
+      /**
+       * 自主选课的专业课保存选中的年度后的操作
+       * 1 要把skuPropertyNameList的年度item的name和value改成选中的年度用于视图显示
+       * 2 要把yearOptionId和yearOptionValue改成选中的年度 用于生成订单页面的提交数据
+       */
+      saveItemYearSuccessDo: function (item,yearOptionId) {
+        //              保存年度成功后把选中的赋值给item的yearOptionId
+        item.yearOptionId = yearOptionId
+//              skuPropertyNameList下item是年度的下标
+        var skuPropertyNameListIndex = utils.findIndex(item.skuPropertyNameList, 'skuPropertyName', '年度')
+//              optionYearList下item是选中的当前年度的下标
+        var optionYearListIndex = utils.findIndex(item.optionYearList,'skuPropertyValueId',yearOptionId)
+        item.skuPropertyNameList[skuPropertyNameListIndex].skuPropertyValueId = yearOptionId
+        item.skuPropertyNameList[skuPropertyNameListIndex].skuPropertyValueName = item.optionYearList[optionYearListIndex].skuPropertyValueName
+        item.skuPropertyNameList[skuPropertyNameListIndex].skuPropertyValueCode = item.optionYearList[optionYearListIndex].skuPropertyValueName
+        item.yearOptionValue = item.optionYearList[optionYearListIndex].skuPropertyValueName
+      },
+      /**
+       * 删除选中的商品
+       */
+      deleteShoppingItemsAction() {
+        var that = this
+        if (this.shoppingChoseList.length > 0) {
+          this.$vux.confirm.show({
+            title: '系统提示',
+            content: '确认删除选中的培训内容？',
+            onCancel: function () {
+              console.log('取消删除')
+            },
+            onConfirm: function () {
+              that.reallyDeleteShoppingItemsAction()
+              console.log('确认删除')
+            }
+          })
+        } else {
+          return this.toast('请选择需删除的培训内容')
+        }
+      },
+//      确定删除商品
+      reallyDeleteShoppingItemsAction() {
+        let context = this
+        let selectedValueArray = []
+        let selectedShoopingItemsArray = []
+        for (let index = 0; index < this.shoppingChoseList.length; index++) {
+          let shoppingItem = this.shoppingChoseList[index]
+          if (shoppingItem.isSelected) {
+            selectedShoopingItemsArray.push(shoppingItem)
+            let objectValue = {
+              courseId: '',
+              yearOptionsId: '',
+              coursePackageId: '',
+              skuId: shoppingItem.skuId,
+              schemeId: shoppingItem.schemeId,
+              dealPrice: shoppingItem.dealPrice,
+              trainingPeriod: shoppingItem.trainingPeriod
+            }
+            if (shoppingItem.courseId !== undefined && shoppingItem.courseId.length) {
+              objectValue.courseId = shoppingItem.courseId
+            }
+            if (shoppingItem.coursePackageId !== undefined && shoppingItem.coursePackageId.length) {
+              objectValue.coursePackageId = shoppingItem.coursePackageId
+            }
+            if (shoppingItem.yearOptionsId !== undefined && shoppingItem.yearOptionsId.length) {
+              objectValue.yearOptionsId = shoppingItem.yearOptionsId
+            }
+            selectedValueArray.push(objectValue)
+          }
+        }
+        console.log(this.shoppingChoseList,'选中的')
+        console.log(selectedValueArray,'提交上去删除的')
+        let params = {
+          classInfo: selectedValueArray
+        }
+        var type = 'post'
+        var url = constant.apiUrl.shoppingCartModule.shoppingDelete
+        utils.getAjaxData(type, params, url).then(res => {
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            this.shoppingCartList.forEach(function (item, index) {
+              item.cartCommdities = item.cartCommdities.filter(function (subItem) {
+                return subItem.isSelected === false
+              })
+            })
+//            如果儿子全部是空的了那么也要把父亲删除掉
+            var len = this.emptyOutterArrLen()
+            if (len === this.shoppingCartList.length) {
+              this.shoppingCartList = []
+            }
+            this.shoppingChoseList = []
+            context.calculateTotalPrice()
+          }
+        }).catch(e => {
+          console.log(e)
+          return this.toast('请求失败')
+        })
+      },
+//      获取有几个外层数组是没有儿子的
+      emptyOutterArrLen: function () {
+        var arr = []
+        this.shoppingCartList.forEach(function (item, index) {
+          if (item.cartCommdities.length <= 0) {
+            arr.push(item)
+          }
+        })
+        return arr.length
+      },
+//      判断单个机构是否全选
+      getCheckedListLengthbyUnitId: function (unitId) {
+        var list = []
+        this.shoppingChoseList.forEach(function (item) {
+          if (item.unitId === unitId) {
+            list.push(item)
+          }
+        })
+        return list.length
+      },
+//      单个机构全选
+      choseTheUnitShoppingGoods: function (item) {
+        var that = this
+        item.isSelected = !item.isSelected
+        if (item.isSelected) {
+          var bol = this.checkIsChoseSameUnit(item)
+          if (!bol) {
+            return false
+          }
+          this.shoppingChoseList = []
+          item.cartCommdities.forEach(function (eachItem) {
+            eachItem.isSelected = true
+            that.shoppingChoseList.push(eachItem)
+          })
+          this.calculateTotalPrice()
+        } else {
+          this.shoppingChoseList = this.shoppingChoseList.filter(function (eachItem) {
+            return eachItem.unitId !== item.unitId
+          })
+          item.cartCommdities.forEach(function (eachItem) {
+            if (eachItem.unitId === item.unitId) {
+              eachItem.isSelected = false
+            }
+          })
+          this.calculateTotalPrice()
+        }
+      },
+      /**
+       * 选中所有物品事件
+       */
+      selectAllAction(e) {
+//        if (this.isSelectedAll) {
+//          this.selectedItemsArray = []
+//          // 设置item选中属性为false
+//          this.resetShoppingItems(false)
+//        } else {
+//          // 添加所有商品到列表
+//
+//          // 设置item选中属性为true
+//          this.resetShoppingItems(true)
+//        }
+//        this.isSelectedAll = !this.isSelectedAll
+//        // 计算总价
+//        this.calculateTotalPrice()
+      },
+      //      校验选择了不同施教机构的商品 如果是则校验不通过
+      checkIsChoseSameUnit: function (item) {
+        var index = this.findUnitIndex(this.shoppingChoseList, item)
+//        如果选了两个施教机构提示 并且把打勾去掉
+        if (index === null && this.shoppingChoseList.length > 0) {
+          this.$vux.alert.show({
+            title: '提示',
+            content: '请选择同一个培训机构的培训内容进行结算。'
+          })
+          item.isSelected = false
+          return false
+        } else {
+          return true
+        }
+      },
+      /**
+       * 判断当前选中的和已选的数组里的比 看看是不是同一个单位的
+       */
+      findUnitIndex: function (arr,item) {
+        var index = null
+        arr.forEach(function (eachItem, exchIndex) {
+          if (eachItem.unitId === item.unitId) {
+            index = exchIndex
+          }
+        })
+        return index;
+      },
+      findIndex: function (arr,item) {
+        var index = null
+        arr.forEach(function (dataItem, dataIndex) {
+          if (dataItem.skuId === item.skuId && dataItem.courseId === item.courseId) {
+            index = dataIndex
+          }
+        })
+        return index
+      },
+      /**
+       * 是否选中购物车商品的事件
+       */
+      selecteItemAction (item,e) {
+        e.stopPropagation()
+        console.log(1)
+        let shoppingItem = item
+        shoppingItem.isSelected = !shoppingItem.isSelected
+        if (shoppingItem.isSelected) {
+          var bol = this.checkIsChoseSameUnit(item)
+          if (!bol) {
+            return false
+          }
+          this.shoppingChoseList.push(item)
+        } else {
+          var index = this.findIndex(this.shoppingChoseList, item)
+          this.shoppingChoseList.splice(index, 1);
+        }
+
+        this.calculateTotalPrice()
+        this.checkIsSelectedAll()
+      },
+      /**
+       * 计算总价格方法
+       */
+      calculateTotalPrice () {
+        let totalPrice = 0
+        let totalCount = 0
+        for (let index = 0; index < this.shoppingChoseList.length; index++) {
+          let itemObject = this.shoppingChoseList[index]
+          totalPrice += itemObject.originalPrice
+          totalCount++
+        }
+        let SettlementTextString = '结算( ' + totalCount + ' )'
+        this.totalPriceString = toDecimal2(totalPrice)
+        this.totalPrice = totalPrice
+        this.showSettlementText = SettlementTextString
+      },
+      /**
+       * 全选和非全选数据变化
+       */
+      resetShoppingItems(isSelected) {
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          if (!itemObject.disable) {
+            itemObject.isSelected = isSelected
+          }
+        }
+//        this.setData({
+//          shoppingItemsArray: this.data.shoppingItemsArray
+//        })
+      },
+      /**
+       * 判断是否选了个数之后为全选，使UI全选同步
+       */
+      checkIsSelectedAll() {
+        let canPurchaseNum = 0;
+        let selectedNum = 0;
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let item = this.shoppingCartList[index]
+          if (!item.disable) {
+            canPurchaseNum++;
+            if (item.isSelected) {
+              selectedNum++
+            }
+          }
+        }
+        if (canPurchaseNum === selectedNum) {
+          this.isSelectedAll = true
+        } else {
+          this.isSelectedAll = false
+        }
+      },
+      /**
+       * 初始重置数据
+       */
+      resetInitializeData() {
+        var that = this
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let itemObject = this.shoppingCartList[index]
+          this.$set(itemObject,'isSelected',false);
+          itemObject.cartCommdities.forEach(function (item) {
+            that.$set(item,'isSelected',false);
+            if (item.optionYearList !== undefined && item.optionYearList.length) {
+              item.currentYearIndex = 0
+              item.yearOptionValue = item.optionYearList[0].skuPropertyValueName
+              for (let yearIndex = 0; yearIndex < item.optionYearList.length; yearIndex++) {
+                let yearObject = item.optionYearList[yearIndex]
+                if (item.yearOptionId === yearObject.skuPropertyValueId) {
+                  item.currentYearIndex = yearIndex
+                  item.yearOptionValue = yearObject.skuPropertyValueName
+                }
+              }
+            }
+          })
+        }
+        this.shoppingChoseList = []
+        this.calculateTotalPrice()
+      },
+      /**
+       * 滚动顶部  点击事件
+       */
+      goTopEvent () {
+        this.$refs.scroller.reset({top: 0})
+      },
+      loadingUIState () {
+        if (this.scorllerStatus === 1) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePulldown()
+            this.scroller.pulldownStatus = 'default'
+            this.scorllerStatus = 0
+            return
+          }
+        }
+        if (this.scorllerStatus === 2) {
+          if (this.$refs.scroller !== undefined) {
+            this.$refs.scroller.donePullup()
+            this.scroller.pullupStatus = 'default'
+            return
+          }
+        }
+        this.$vux.loading.hide()
+      },
+      initPager: function () {
+        this.pager = {
+          pageNo: 1,
+          pageSize: 1
+        }
+        this.disablePager = {
+          pageNo: 1,
+          pageSize: 1
+        }
+      },
+      checkHasChooseItem: function () {
+        if (this.shoppingChoseList.length) {
+          return true
+        } else {
+          return false
+        }
+      },
+      getSkuValueName: function (skuArr,skuName) {
+        if (!skuArr) {
+          return ''
+        }
+        var str = ''
+        skuArr.forEach(function (item) {
+          if (item.skuPropertyName === skuName) {
+            str = item.skuPropertyValueName
+          }
+        })
+        return str
+      },
+      getStudyType: function (item) {
+        var typeName = ''
+        if (item.categoryType === 'TRAINING_CLASS_GOODS') {
+          typeName = '培训班学习'
+        }
+        if (item.categoryType === 'COURSE_SUPERMARKET_GOODS') {
+          typeName = '课程学习'
+        }
+        return typeName
+      },
+      /**
+       * 自主选课的专业课要用户选择年度
+       */
+      isShowYearPicker: function (item) {
+        if (item === undefined) {
+          return false
+        }
+        if (item.categoryType !== undefined && item.categoryType === 'COURSE_SUPERMARKET_GOODS' && getSkuCodeValueWithKeyFromSkuArray('trainingSubject', item.skuPropertyNameList) === 'profession') {
+          return true
+        }
+        return false
+      },
+      iamgeUrl (item) {
+        if (item.photoPath === undefined) {
+          return require('../../../design/images/course-img.jpg')
+        }
+        return item.photoPath
+      },
+      /**
+       * 如果是自主选课 -专业课对选择年度列表做得操作
+       * 1如果之前选过年度那直接回填
+       * 2给年度列表首项加一个请选择年度选项
+       * 3设置一个控件认的数据结构[[{name:'',value:''}]]
+       */
+      itemYearOptionsDo: function () {
+        var that = this
+        this.shoppingCartList.forEach(function (item) {
+          item.cartCommdities.forEach(function (subItem) {
+            if (subItem.optionYearList.length) {
+              if (subItem.yearOptionId) {
+                that.$set(subItem, 'optionYearModelList', [subItem.yearOptionId])
+              } else {
+                that.$set(subItem,'optionYearModelList',[''])
+              }
+//            如果是加载更多已经加过请选择年度的就不用再加了
+              if (subItem.optionYearList[0].name !== '请选择年度') {
+                subItem.optionYearList.forEach(function (graItem) {
+                  that.$set(graItem,'name',graItem.skuPropertyValueName)
+                  that.$set(graItem,'value',graItem.skuPropertyValueId)
+                })
+                subItem.optionYearList.unshift({name: '请选择年度', value: ''})
+              }
+              that.$set(subItem, 'optionYearList', subItem.optionYearList)
+              that.$set(subItem,'optionYearViewList',[subItem.optionYearList])
+            }
+            console.log(subItem.optionYearViewList,'8888')
+          })
+        })
+      },
+      getShoppingCartList: function () {
+        var that = this
+        var type = 'get'
+        var url = constant.apiUrl.shoppingCartModule.getValidShoppingCartListV3
+        var params = {
+          pageNo: that.pager.pageNo,
+          pageSize: that.pager.pageSize
+        }
+        if (this.scorllerStatus === 0) {
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+        }
+        utils.getAjaxData(type, params, url).then(res => {
+          this.loadingUIState();
+          if (this.$refs.scroller !== undefined && this.scorllerStatus !== 2) this.$refs.scroller.reset({top: 0})
+          if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+            return this.toast(res.head.message)
+          } else {
+            console.log(res,'购物车')
+            this.shoppingCartTotalSize = res.data.shoppingItems.length
+//            2是加载更多
+            if (this.scorllerStatus === 2) {
+              this.shoppingCartList = this.shoppingCartList.concat(res.data.shoppingItems)
+              this.resetInitializeData()
+              this.itemYearOptionsDo()
+              this.scorllerStatus = 0
+            } else {
+              this.shoppingCartList = res.data.shoppingItems
+              this.resetInitializeData()
+              this.itemYearOptionsDo()
+              this.initPager()
+            }
+          }
+        }).catch(e => {
+          this.loadingUIState();
+          console.log(e)
+        })
+      },
+//      结算的时候判断是否选择了年度
+      hasChoseYearOptionId: function (selectedShoopingItemsArray) {
+        var str = null
+        selectedShoopingItemsArray.forEach((item) => {
+          if (item.optionYearModelList && !item.optionYearModelList[0]) {
+            str = 'no'
+          } else {
+            str = 'yes'
+          }
+        })
+        return str
+      },
+      purchaseAction() {
+        var that = this
+        let selectedShoopingItemsArray = []
+        for (let index = 0; index < this.shoppingCartList.length; index++) {
+          let shoppingItem = this.shoppingCartList[index]
+          shoppingItem.cartCommdities.forEach(function (item) {
+            if (item.isSelected) {
+              selectedShoopingItemsArray.push(item)
+            }
+          })
+        }
+        // 有值的时候进行跳转
+        if (selectedShoopingItemsArray.length) {
+          console.log(selectedShoopingItemsArray)
+          if (this.hasChoseYearOptionId(selectedShoopingItemsArray) === 'no') {
+            return this.toast('请选择年度')
+          }
+//          enableShoppingCart
+          var type = 'post'
+          var url = constant.apiUrl.shoppingCartModule.enableShoppingCart
+          var ajaxArr = []
+          selectedShoopingItemsArray.forEach(function (each) {
+            ajaxArr.push({
+              courseId: each.courseId,
+              yearOptionsId: each.yearOptionId,
+              hour: each.trainingPeriod,
+              price: each.originalPrice,
+              coursePoolId: each.coursePackageId,
+              commoditySkuId: each.skuId,
+              schemeId: each.schemeId,
+              needYear: '',
+              name: each.skuName,
+              unitId: each.unitId
+            })
+          })
+          var params = {
+            paymentChannelType: 'WECHAT_OFFICIAL_ACCOUNTS',
+            courseCommodities: ajaxArr
+          }
+          this.$vux.loading.show({
+            text: '加载中'
+          })
+          utils.getAjaxData(type, params, url).then(res => {
+            this.$vux.loading.hide()
+            if (res.head.code !== storeTypes.NETWORK_RESULT_SUCCESS) {
+              if (res.head.code === 600) {
+                this.commonConfirm(that, res)
+              } else {
+                return this.toast(res.head.message)
+              }
+            } else {
+              //          debugger
+              try {
+//          把商品列表通过store传送给生成订单页面
+                this.$store.dispatch('changeSkuListState',selectedShoopingItemsArray)
+              } catch (e) {
+              }
+//          页面跳转
+              this.$router.push({
+                path: '/createOrder'
+              })
+            }
+          }).catch(e => {
+            this.$vux.loading.hide()
+            console.log(e)
+            return this.toast('请求失败')
+          })
+        }
+      },
+      /**
+       * 下拉刷新
+       */
+      refreshData () {
+        console.log(this.scroller)
+        console.log('下拉刷新！！！')
+        this.scorllerStatus = 1
+        this.initPager()
+        this.getShoppingCartList()
+        this.getInvalidShoppingCartListV3()
+      },
+      loadMoreFn: function () {
+        console.log('我已经到底部')
+        if (this.judgeLoadMoreTriggerToShort()) {
+          return false
+        }
+        this.scorllerStatus = 2
+        if (this.shoppingCartTotalSize < this.pager.pageSize) {
+          console.log('正常的商品没有更多了')
+          this.loadingUIState()
+          if (this.disableShoppingCartTotalSize < this.disablePager.pageSize) {
+            console.log('失效的商品没有更多了')
+            this.loadingUIState()
+            return false
+          } else {
+            this.disablePager.pageNo++
+            this.getInvalidShoppingCartListV3()
+          }
+          return false
+        }
+        this.pager.pageNo++;
+        console.log(this.pager.pageNo,'pageNo')
+//        this.loadingUIState()
+//        if (this.shoppingCartList.length && this.shoppingCartTotalSize === 0) {
+//          console.log('没有更多了')
+//          return false
+//        }
+        this.getShoppingCartList()
+      },
+      /**
+       * 判断是否短时间内触发两次加载更多
+       */
+      judgeLoadMoreTriggerToShort () {
+        if (this.loadMoreTrggierTime) {
+          if (new Date().getTime() - this.loadMoreTrggierTime < 200) {
+            console.log(new Date().getTime() - this.loadMoreTrggierTime, 'todo 时间差太小了不运行')
+            this.loadingUIState()
+            return true
+          } else {
+            this.loadMoreTrggierTime = new Date().getTime()
+            return false
+          }
+        } else {
+          this.loadMoreTrggierTime = new Date().getTime()
+          return false
+        }
+      }
+    }
+  }
+
+  function toDecimal2 (x) {
+    var f;
+    f = parseFloat(x)
+    if (isNaN(f)) {
+      return false
+    }
+    f = Math.round(x * 100) / 100
+    var s = f.toString()
+    var rs = s.indexOf('.')
+    if (rs < 0) {
+      rs = s.length
+      s += '.'
+    }
+    while (s.length <= rs + 2) {
+      s += '0'
+    }
+    return s
+  }
+
+  function getSkuCodeValueWithKeyFromSkuArray (skuKey, skuPropertyArray) {
+    if (skuPropertyArray === undefined || skuPropertyArray.length === 0) {
+      return ''
+    }
+    var propertyVlueCode = ''
+    for (var i = 0; i < skuPropertyArray.length; i++) {
+      var skuPropertyObject = skuPropertyArray[i]
+      if (skuPropertyObject.skuPropertyCode === skuKey) {
+        propertyVlueCode = skuPropertyObject.skuPropertyValueCode
+      }
+    }
+    return propertyVlueCode
+  }
+//  function arrayRemove (arr, val) {
+//    var index = arr.indexOf(val)
+//    if (index > -1) {
+//      arr.splice(index, 1)
+//    }
+//  }
+</script>

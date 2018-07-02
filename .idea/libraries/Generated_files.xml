@@ -2,54 +2,58 @@
   <library name="Generated files" type="javaScript">
     <properties>
       <sourceFilesUrls>
+        <item url="file://$PROJECT_DIR$/dist/design/main.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/global/global.js" />
+        <item url="file://$PROJECT_DIR$/dist/design/VueMapper.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/store/getters.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/common/core/WeixinAuth.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/common/core/Interceptor.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/global/constants/AppConstant.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/store/modules/loginModule.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/store/modules/classModule.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/common/util/Utils.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/store/fetch.js" />
+        <item url="file://$PROJECT_DIR$/dist/src/store/modules/accountModule.js" />
         <item url="file://$PROJECT_DIR$/dist/src/common/core/Login.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/modules/certificationModule.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/modules/orderModule.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/actions.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/modules/productModule.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/global/global.js" />
         <item url="file://$PROJECT_DIR$/dist/src/main.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/store/getters.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/common/core/WeixinAuth.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/modules/modules.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/common/core/Interceptor.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/index.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/global/constants/AppConstant.js" />
         <item url="file://$PROJECT_DIR$/dist/config/index.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/types.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/store/modules/loginModule.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/store/modules/classModule.js" />
         <item url="file://$PROJECT_DIR$/dist/src/router/Index.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/common/util/Utils.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/mutations.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/store/fetch.js" />
-        <item url="file://$PROJECT_DIR$/dist/src/store/modules/accountModule.js" />
         <item url="file://$PROJECT_DIR$/dist/src/store/modules/WXModule.js" />
       </sourceFilesUrls>
     </properties>
     <CLASSES>
+      <root url="file://$PROJECT_DIR$/dist/design/main.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/global/global.js" />
+      <root url="file://$PROJECT_DIR$/dist/design/VueMapper.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/store/getters.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/common/core/WeixinAuth.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/common/core/Interceptor.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/global/constants/AppConstant.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/store/modules/loginModule.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/store/modules/classModule.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/common/util/Utils.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/store/fetch.js" />
+      <root url="file://$PROJECT_DIR$/dist/src/store/modules/accountModule.js" />
       <root url="file://$PROJECT_DIR$/dist/src/common/core/Login.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/modules/certificationModule.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/modules/orderModule.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/actions.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/modules/productModule.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/global/global.js" />
       <root url="file://$PROJECT_DIR$/dist/src/main.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/store/getters.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/common/core/WeixinAuth.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/modules/modules.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/common/core/Interceptor.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/index.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/global/constants/AppConstant.js" />
       <root url="file://$PROJECT_DIR$/dist/config/index.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/types.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/store/modules/loginModule.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/store/modules/classModule.js" />
       <root url="file://$PROJECT_DIR$/dist/src/router/Index.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/common/util/Utils.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/mutations.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/store/fetch.js" />
-      <root url="file://$PROJECT_DIR$/dist/src/store/modules/accountModule.js" />
       <root url="file://$PROJECT_DIR$/dist/src/store/modules/WXModule.js" />
     </CLASSES>
     <SOURCES />
